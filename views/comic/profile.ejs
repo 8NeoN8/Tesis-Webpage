@@ -1,0 +1,76 @@
+<%- include ('../partials/head.ejs') %>
+<% if (user) { %>
+    <h1>Hello <%= user.name %> </h1>
+    <%- include ('../partials/navLogged.ejs') %>
+<% } else { %>
+    <%- include ('../partials/navGuest.ejs') %>
+<% } %>
+<h1>AQUI VA EL PERFIL DEL COMIC</h1>
+
+<% if (chapterArr) { %>
+    <% console.log("a"); %>
+<% } %>
+<% if (genres) { %>
+    <% console.log("b"); %>
+<% } %>
+<% if (comic) { %>
+    <% let readUrl = '../comic/read/' %>
+    <h1><a href="<%=  %> "></a></h1>
+    <h1><%= comic[0].comicName %> </h1>
+    <h1><%= comic[0].comicDescription %> </h1>
+    <% let imgSrc = "/uploads/"+comic[0].comicOgWriter +"/"+ comic[0].comicOgName +"/CoverImage-"+ comic[0].comicOgName +"."+(comic[0].comicCoverPath.split(".").pop()) %>
+    <img src="<%= imgSrc %>" alt="">
+    <div class="text-dark">
+        Tags
+        <% for( let i = 0; i < genres.length; i++ ) { %>
+          <p><%= genres[i] %> </p>
+        <% } %>
+    </div>
+
+    <% if (isUploader) { %>
+        <% console.log("chapterArr"); %>
+        <% if (comic[0].comicName.includes(" ")) { %>
+            <% let comicNameUnSp = comic[0].comicName.replaceAll(" ","-") %>
+            <% let deleteComic =  "/comic/delete/"+user.name+"/"+comicNameUnSp %>
+            <% let editComic =  "/comic/edit/"+user.name+"/"+comicNameUnSp %>
+            <a href=<%= editComic %> id="editComicLink">Edit comic</a>
+            <a href=<%= deleteComic%> id="deleteComicLink">Delete comic</a>
+        <% } else {%>
+            <% let deleteComic =  "/comic/delete/"+user.name+"/"+comic[0].comicName %>
+            <% let editComic =  "/comic/edit/"+user.name+"/"+comic[0].comicName %>
+            <a href=<%= editComic %> id="editComicLink">Edit comic</a>
+            <a href=<%= deleteComic%> id="deleteComicLink">Delete comic</a>
+        <% } %>
+
+    <% } %>
+
+<% } %>
+
+<% if (fileNames) { %>
+    <% console.log("fileNames");  %>
+    <% for( let i = 0; i < fileNames.length; i++ ) { %>
+        <% let files = fileNames[i].split('.') %>
+        <h1>
+            <% let chapterLink = "../read/"+ comic[0].comicOgName+"/"+files[0]+"/1"%>
+            <a href="<%= chapterLink %>">
+                <%= files[0]+" - "+chapterArr[i].chapterTittle %>
+            </a>
+            <% if (isUploader) { %>
+                <% if (comic[0].comicName.includes(" ")) { %>
+                    <% let comicNameUnSp = comic[0].comicName.replaceAll(" ","-") %>
+                    <% let deleteChapter = "/comic/delete/"+user.name+"/"+comicNameUnSp+"/"+files[0] %>
+                    <a href=<%= deleteChapter %>  id="deleteChapterLink">Delete chapter</a>
+                <% } else { %>
+                    <% let deleteChapter = "comic/delete/"+user.name+"/"+comic[0].comicName+"/"+files[0] %>
+                    <a href=<%= deleteChapter %>  id="deleteChapterLink">Delete chapter</a>
+                <% } %>
+            <% } %>
+        </h1>
+    <% } %>
+<% } %>
+
+<script>
+
+
+
+</script>

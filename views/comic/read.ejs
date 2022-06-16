@@ -1,0 +1,43 @@
+<%- include ('../partials/head.ejs') %>
+<% if (user) { %>
+    <h1>Hello <%= user.name %> </h1>
+    <%- include ('../partials/navLogged.ejs') %>
+<% } else { %>
+    <%- include ('../partials/navGuest.ejs') %>
+<% } %>
+
+<% let nextPage = parseInt(chapter.currentPage) + 1 %>
+<% let prevPage = parseInt(chapter.currentPage) - 1 %>
+<% console.log(chapter.nextPrevLinks+"1") %>
+
+<div class="display-chapter-image">
+
+    <% if (chapter.currentPage <= 0) { %>
+        <img src="<%= chapter.theFunnyGuy %>" id="image">
+    <% } else {%>
+        <img src="<%= chapter.imagesUrl %>" id="image">
+    <% } %>
+
+    <% if (prevPage <= 0) { %>
+        <a href="<%= chapter.nextPrevLinks+"1" %>" id="prev">Previous</a>
+    <% } else {%>
+        <a href="<%= chapter.nextPrevLinks+prevPage %>" id="prev">Previous</a>
+    <% } %>
+
+    <% if (nextPage > chapter.pageAmout) { %>
+        <a href="<%= chapter.nextPrevLinks+chapter.pageAmout %>" id="next">Next</a>
+    <% } else {%>
+        <% if (nextPage <= 0) { %>
+            <a href="<%= chapter.nextPrevLinks+"2" %>" id="prev">next</a>
+        <% }  else { %>
+            <a href="<%= chapter.nextPrevLinks+nextPage %>" id="next">Next</a>
+        <% } %>
+
+    <% } %>
+
+
+    <a href="<%= chapter.comicProfile %> ">Go to Comic</a>
+
+</div>
+
+<%- include ('../partials/footer.ejs') %>

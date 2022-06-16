@@ -1,0 +1,157 @@
+<%- include ('../partials/head.ejs') %>
+<h1>Create comic entry</h1>
+<%- include ('../partials/message.ejs') %>
+<% if (user) { %>
+    <h1>Hello <%= user[0].name %> </h1>
+    <%- include ('../partials/navLogged.ejs') %>
+<% } else { %>
+    <%- include ('../partials/navGuest.ejs') %>
+<% } %>
+
+<h3 class="bg-danger text-light">WARNING: You wont be able to change cover image unless you delete the comic, make sure you upload the correct one</h3>
+
+
+<form action="/comic/create" method="post" enctype="multipart/form-data" class="p-3 bg-dark text-light">
+
+    <div class="form-group m-2">
+        <label for="comicName">Comic Name</label>
+        <input type="text" name="comicName" id="comicName" required>
+    </div>
+
+    <div class="form-group m-2">
+        <label for="comicDescription">Comic Description</label>
+        <input type="text" name="comicDescription" id="comicDescription" required>
+    </div>
+    <div class="form-group m-2">
+        <label for="CoverImage">Cover Image</label>
+        <input type="file" name="CoverImage" id="CoverImage" accept="image/*" required>
+    </div>
+    <div class="form-group m-2">
+        <label for="comicStart">Start Date</label>
+        <input type="date" name="comicStart" id="comicStart">
+    </div>
+    <div class="form-group m-2">
+        <label for="comicSchedule">Publication schedule</label>
+        <select  name="comicSchedule" id="comicSchedule">
+            <option value="finished">Finished</option>
+            <option value="weekly">Weekly</option>
+            <option value="biweekly">biWeekly</option>
+            <option value="triweekly">triWeekly</option>
+            <option value="monthly">monthly</option>
+            <option value="bimonthly">bimonthly</option>
+            <option value="trimonthly">trimonthly</option>
+        </select>
+    </div>
+    <div class="form-group m-2">
+        <label for="comicStatus">Publication Status</label>
+        <select name="comicStatus" id="comicStatus">
+            <option value="Ongoing">Ongoing</option>
+            <option value="Hiatus">Hiatus</option>
+            <option value="Finished">Finished</option>
+            <option value="Abandoned">Abandoned</option>
+        </select>
+    </div>
+    <div class="form-group m-2">
+        <label for="isWriter">Is the user the comic writer?</label>
+        <input type="checkbox" name="isWriter" id="isWriter">
+    </div>
+    <div class="form-group m-2">
+        <label for="comicOgWriter">original Writer</label>
+        <input type="text" name="comicOgWriter" id="comicOgWriter" disabled>
+    </div>
+
+    <div class="form-group m-2">
+        <label for="selectedCats">Selected Categories</label>
+        <input type="text" name="selectedCats" id="selectedCats" disabled>
+    </div>
+
+    <div id="categories-block"></div>
+    <button type="button" id="addCat">Add another category</button>
+    <button type="button" id="revCat">Remove last category</button>
+    <button type="submit" id="register">Register</button>
+
+</form>
+
+<script>
+    let check = document.getElementById('isWriter')
+    let og = document.getElementById('comicOgWriter')
+    check.addEventListener('click', () => {
+        og.toggleAttribute('disabled')
+    })
+    catAmount = 0;
+    let cats = document.getElementById('categories-block')
+    let addCat = document.getElementById('addCat')
+
+    let catGroup = ["---","action","comedy","mistery","adventure","drama","horror","fantasy","romance","school life","slice of life","sci-fi","sports","mature","crime","psychological","martial arts"]
+
+    let selCats = document.getElementById('selectedCats');
+    selCats.value = ""
+    let register = document.getElementById('register');
+
+    cats.addEventListener('load',createCats())
+
+    function createCats(){
+        catAmount++;
+        let catDiv = document.createElement('div');
+        catDiv.classList.add('form-group');
+        catDiv.classList.add('m-2');
+        catDiv.setAttribute('id',`cat_`+catAmount);
+
+        let catLabel = document.createElement('label');
+        catLabel.setAttribute('for','cat'+catAmount);
+        catLabel.textContent = "Category"+catAmount;
+
+        let catSelect = document.createElement('select');
+        catSelect.setAttribute('name','cat'+catAmount);
+        catSelect.setAttribute('id','catSelect-'+catAmount);
+        catSelect.toggleAttribute('required');
+
+        cats.appendChild(catDiv);
+        catDiv.appendChild(catLabel);
+        catDiv.appendChild(catSelect)
+
+        let counter = 1
+        for(let i = 0; i < catGroup.length; i++){
+            let catOption = document.createElement('option');
+            catOption.setAttribute('value',catGroup[i]);
+            catOption.textContent = catGroup[i].toUpperCase();
+            catSelect.appendChild(catOption);
+            counter++;
+        }
+
+        catSelect.addEventListener('change',()=>{
+            let value = catSelect.options[catSelect.selectedIndex].value;
+            if(value === "---") return
+            if(selCats.value.includes(value))return
+            selCats.value += ','+value;
+            catSelect.toggleAttribute('disabled')
+        })
+    }
+
+    addCat.addEventListener('click', () => {
+        createCats();
+    })
+
+    revCat.addEventListener('click', () => {
+        if(catAmount > 1){
+            let removing = document.getElementById('cat_'+catAmount);
+            let catSelect = document.getElementById('catSelect-'+catAmount);
+            let valueOp = catSelect.options[catSelect.selectedIndex].value;
+            console.log(valueOp);
+            selCats.value = selCats.value.replace(","+valueOp," ")
+            removing.remove();
+            catAmount--;
+        }else if (catAmount == 1){
+            let select = document.getElementById('catSelect-1');
+            select.toggleAttribute('disabled')
+            selCats.value = "";
+        }
+    })
+
+    register.addEventListener('click',()=>{
+        selCats.toggleAttribute('disabled')
+    })
+
+</script>
+
+<%- include ('../partials/footer.ejs') %>
