@@ -16,7 +16,6 @@ models.UserEntry = sequelize.define('user',{
         allowNull: false,
         primaryKey: true,
         autoIncrement: true,
-        defaultValue: true
     },
     role:{
         type: DataTypes.INTEGER(1),
@@ -34,7 +33,12 @@ models.UserEntry = sequelize.define('user',{
     password:{
         type: DataTypes.STRING(50),
         allowNull: false
+    },
+    profilePicPath:{
+        type: DataTypes.STRING(255),
+        allowNull: true
     }
+
 })
 
 models.ComicEntry = sequelize.define('comic',{
@@ -43,7 +47,6 @@ models.ComicEntry = sequelize.define('comic',{
         allowNull: false,
         primaryKey: true,
         autoIncrement: true,
-        defaultValue: true
     },
     comicUploader_id:{
         type: DataTypes.INTEGER(11),
@@ -85,7 +88,8 @@ models.ComicEntry = sequelize.define('comic',{
     },
     comicStart:{
         type: DataTypes.DATEONLY,
-        allowNull:false
+        allowNull:false,
+        defaultValue: true
     },
 })
 
@@ -95,7 +99,6 @@ models.CategoriesEntry = sequelize.define('category',{
         allowNull: false,
         primaryKey: true,
         autoIncrement: true,
-        defaultValue: true
     },
     comic_id:{
         type: DataTypes.INTEGER(11),
@@ -117,7 +120,6 @@ models.ChapterEntry = sequelize.define('chapter',{
         allowNull: false,
         primaryKey: true,
         autoIncrement: true,
-        defaultValue: true
     },
     comic_id:{
         type: DataTypes.INTEGER(20),
@@ -143,9 +145,16 @@ models.CommentEntry = sequelize.define('comment',{
         allowNull: false,
         primaryKey: true,
         autoIncrement: true,
-        defaultValue: true
     },
     comic_id:{
+        type: DataTypes.INTEGER(20),
+        references:{
+            model:models.ComicEntry,
+            key: 'id'
+        },
+        allowNull: false
+    },
+    chapter_id:{
         type: DataTypes.INTEGER(20),
         references:{
             model:models.ChapterEntry,
@@ -167,13 +176,12 @@ models.CommentEntry = sequelize.define('comment',{
     }
 })
 
-models.SocialEntry = async() => {sequelize.define('socilaNetwork',{
+models.SocialEntry = sequelize.define('socilaNetwork',{
     id:{
         type: DataTypes.INTEGER(20),
         allowNull: false,
         primaryKey: true,
         autoIncrement: true,
-        defaultValue: true
     },
     user_id:{
         type: DataTypes.INTEGER(11),
@@ -191,7 +199,32 @@ models.SocialEntry = async() => {sequelize.define('socilaNetwork',{
         type: DataTypes.STRING(255),
         allowNull:false
     }
-})}
+})
+
+models.SettingsEntry = sequelize.define('setting',{
+    id:{
+        type: DataTypes.INTEGER(20),
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true,
+    },
+    user_id:{
+        type: DataTypes.INTEGER(11),
+        references:{
+            model:models.UserEntry,
+            key:'id'
+        },
+        allowNull: false
+    },
+    setting:{
+        type: DataTypes.STRING(30),
+        allowNull:false
+    },
+    value:{
+        type: DataTypes.STRING(255),
+        allowNull:false
+    }
+})
 
 /*
 *Use model.build({}) to create a new instance

@@ -1,118 +1,221 @@
 const bcryptjs = require('bcryptjs');
 const pool = require('../database');
+const models = require('../models/models');
+const helpers = require('../lib/helpers')
+const bcrypt = require('bcrypt');
 
+const settings_get = async (req, res) => {
+    let user; await req.user.then(e => {user = e[0].dataValues;})
 
+    const title = `Configuracion ${user.username}`
 
-const register_get = (req, res) => {
-    res.render('./user/register', {tittle: 'register', success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
+    res.render('user/settings', {title: title, success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
 }
 
-const register_post = async (req,res) => {
-    try{
-        await pool.query('USE tesis;');
+const settings_post = async (req, res) => {
+    let user; await req.user.then(e => {user = e[0].dataValues;})
 
-        const isUsername = await pool.query('SELECT name FROM users WHERE name = ?', [req.body.name])
-        const isEmail = await pool.query('SELECT email FROM users WHERE email = ?', [req.body.email])
+    //let settings = await models.SettingsEntry
 
-        if(isUsername.length > 0 || isEmail.length > 0){
-            req.flash('error','User or Email already registered')
-            console.log(req.flash('error'));
-            res.redirect('./register');
+    let userentry = await models.UserEntry.findByPk(req.params.id)
+
+    userentry = userentry.dataValues
+
+
+    if (req.body.pageTurn) {
+        await models.SettingsEntry.update({value:req.body.pageTurn},{
+            where: {
+                user_id: req.params.id,
+                setting:"pageTurnDirection"
+            }
+        })
+    }
+
+    if (req.body.imgScalling) {
+        await models.SettingsEntry.update({value:req.body.imgScalling},{
+            where: {
+                user_id: req.params.id,
+                setting:"imgScalling"
+            }
+        })
+    }
+
+    if (req.body.jumpPage) {
+        await models.SettingsEntry.update({value:req.body.jumpPage},{
+            where: {
+                user_id: req.params.id,
+                setting:"jumpOnPageTurn"
+            }
+        })
+    }
+
+    if (req.body.colorFilter) {
+        await models.SettingsEntry.update({value:req.body.colorFilter},{
+            where: {
+                user_id: req.params.id,
+                setting:"colorFilter"
+            }
+        })
+    }
+
+    if (req.body.customColor) {
+        await models.UserEntry.update({value:req.body.customColor},{
+            where: {
+                user_id: req.params.id,
+                setting:"colorFilter"
+            }
+        })
+    }
+
+    if (req.body.filterOnOff) {
+        await models.SettingsEntry.update({value:req.body.filterOnOff},{
+            where: {
+                user_id: req.params.id,
+                setting:"filterOnOff"
+            }
+        })
+    }
+
+    if (req.body.imgDisplay) {
+        await models.SettingsEntry.update({value:req.body.imgDisplay},{
+            where: {
+                user_id: req.params.id,
+                setting:"imgDisplay"
+            }
+        })
+    }
+
+    if (req.body.focusMode) {
+        await models.SettingsEntry.update({value:req.body.focusMode},{
+            where: {
+                user_id: req.params.id,
+                setting:"focusMode"
+            }
+        })
+    }
+
+    if (req.body.username) {
+        let findUser = await models.UserEntry.findOne({
+            where: {
+                username: req.body.username
+            }
+        })
+        console.log(findUser);
+        if (findUser) {
+            req.flash('error','Este nombre de usuario ya esta siendo utilizado')
+            res.redirect('back')
             return
         }
-
-        //* hash user password
-        const hashedPassword = await bcryptjs.hash(req.body.password, 10);
-        const user = {
-            id: Date.now()+''+Math.floor(Math.random() * 100000),
-            name: req.body.name,
-            email: req.body.email,
-            password: hashedPassword
-        }
-
-        //*register the user in database
-        await pool.query('USE tesis;');
-        await pool.query('INSERT INTO users set ?',[user])
-            //*if successful
-            .then(req.flash('success','User registered successfuly'))
-            .then(res.redirect('../user/login'))
-
-
-    }catch(err){
-        //*if failed return to register
-        console.log(err);
-        req.flash('error','Something went wrong...')
-        res.redirect('../user/register');
+        await models.UserEntry.update({username: req.body.username},{
+            where: {
+                id: req.params.id
+            }
+        })
     }
-}
 
-const settings = async (req, res) => {
-    await pool.query('USE tesis;')
-    prueba = await pool.query('SELECT * FROM users;')
+    if (req.body.email) {
+        let findEmail = await models.UserEntry.findOne({
+            where: {
+                email: req.body.email
+            }
+        })
+        console.log(findEmail);
+        if (findEmail) {
+            req.flash('error','Este email ya esta siendo utilizado')
+            res.redirect('back')
+            return
+        }
+        await models.UserEntry.update({email: req.body.email},{
+            where: {
+                id: req.params.id
+            }
+        })
+    }
 
-    res.render('user/settings', {tittle: 'Settings',prueba:prueba})
+    if (req.body.theme){
+        await models.SettingsEntry.update({value:req.body.theme},{
+            where: {
+                user_id: req.params.id,
+                setting:"theme"
+            }
+        })
+    }
+
+    if (req.body.oldPassword && req.body.newPassword && req.body.confirmNewPassword) {
+        if (req.body.newPassword === req.body.confirmNewPassword) {
+            if (helpers.matchPassword(oldPassword,userentry.password)) {
+                await models.UserEntry.update({password: helpers.encryptPassword(req.body.newPassword)},{
+                    where: {
+                        id: req.params.id
+                    }
+                })
+            }
+        }
+    }
+
+    res.redirect('back')
 }
 
 const deleteUser = async (req, res) => {
 
-    //*get user id from get method
-    const {id} = req.params;
-    console.log({id});
 
-    //* delete suer from database
-    await pool.query('USE tesis;');
-    await pool.query('DELETE FROM users WHERE ID =?', [id]);
+    const userId = req.params.id;
 
-    res.redirect('../../');
-}
-
-const editUser_get = async (req, res) => {
-
-    const {id} = req.params;
-
-    await pool.query('USE tesis;');
-    const users = await pool.query('SELECT * FROM users WHERE ID =?', [id]);
-    res.render('user/editUser', {tittle:'Edit user' ,users:users[0]});
-
-}
-
-const editUser_post = async (req, res) => {
-
-    const {id} = req.params;
-    console.log({id});
-
-    try{
-
-        //* hash user password
-        const hashedPassword = await bcryptjs.hash(req.body.password, 10);
-        const user = {
-            name: req.body.name,
-            email: req.body.email,
-            password: hashedPassword
+    if (await models.UserEntry.findOne({
+        where: {
+            id:userId
         }
-
-        //*register the user in database
-        await pool.query('USE tesis;');
-        await pool.query('UPDATE users set ? WHERE ID = ?;',[user,id])
-        console.log('Update successful')
-        console.log(user)
-        res.redirect('../register');
-        //res.render('index',{tittle:'index'})
-
-    }catch(err){
-        //*if failed return to register
-        console.log(err);
-        res.redirect('../login/');
+    })){
+        await models.UserEntry.destroy({
+            where: {
+              id: userId
+            }
+        });
     }
 
+    if (await models.SettingsEntry.findOne({
+        where: {
+            id:userId
+        }
+    })){
+        await models.SettingsEntry.destroy({
+            where: {
+                user_id: userId
+            }
+        })
+    }
+
+    if (await models.SocialEntry.findOne({
+        where: {
+            id:userId
+        }
+    })){
+        await models.SocialEntry.destroy({
+            where: {
+                user_id: userId
+            }
+        })
+    }
+
+    if (await models.CommentEntry.findOne({
+        where: {
+            id:userId
+        }
+    })){
+        await models.CommentEntry.destroy({
+            where: {
+                user_id: userId
+            }
+        })
+    }
+
+    req.flash('success','Usuario eliminado exitosamente')
+    res.redirect('back');
 }
 
-module.exports ={
 
-    register_get,
-    register_post,
-    settings,
+module.exports ={
+    settings_get,
+    settings_post,
     deleteUser,
-    editUser_get,
-    editUser_post
 }

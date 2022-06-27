@@ -2,82 +2,88 @@
 <h1>Create comic entry</h1>
 <%- include ('../partials/message.ejs') %>
 <% if (user) { %>
-    <h1>Hello <%= user[0].name %> </h1>
+    <% console.log(user[0].dataValues.username); %>
+    <h1>Hello <%= user[0].dataValues.username %> </h1>
     <%- include ('../partials/navLogged.ejs') %>
 <% } else { %>
     <%- include ('../partials/navGuest.ejs') %>
 <% } %>
 
-<h3 class="bg-danger text-light">WARNING: You wont be able to change cover image unless you delete the comic, make sure you upload the correct one</h3>
+<h3 class="bg-danger text-light">AVISO: si las imagenes no estan ordenadas en el formato "pag(numero).(extension)" no sera validad la subida</h3>
 
 
 <form action="/comic/create" method="post" enctype="multipart/form-data" class="p-3 bg-dark text-light">
 
     <div class="form-group m-2">
-        <label for="comicName">Comic Name</label>
+        <label for="comicName">Nombre/Titulo</label>
         <input type="text" name="comicName" id="comicName" required>
     </div>
 
     <div class="form-group m-2">
-        <label for="comicDescription">Comic Description</label>
+        <label for="comicDescription">Descripción</label>
         <input type="text" name="comicDescription" id="comicDescription" required>
     </div>
     <div class="form-group m-2">
-        <label for="CoverImage">Cover Image</label>
+        <label for="CoverImage">Imagen de Portada</label>
         <input type="file" name="CoverImage" id="CoverImage" accept="image/*" required>
     </div>
     <div class="form-group m-2">
-        <label for="comicStart">Start Date</label>
+        <label for="comicStart">Fecha de Inicio</label>
         <input type="date" name="comicStart" id="comicStart">
     </div>
     <div class="form-group m-2">
-        <label for="comicSchedule">Publication schedule</label>
+        <label for="comicSchedule">Frecuencia de Publicación</label>
         <select  name="comicSchedule" id="comicSchedule">
-            <option value="finished">Finished</option>
-            <option value="weekly">Weekly</option>
-            <option value="biweekly">biWeekly</option>
-            <option value="triweekly">triWeekly</option>
-            <option value="monthly">monthly</option>
-            <option value="bimonthly">bimonthly</option>
-            <option value="trimonthly">trimonthly</option>
+            <option value="Terminado">Terminado</option>
+            <option value="Semanal">Semanal</option>
+            <option value="Bisemanal">Bisemanal</option>
+            <option value="Trisemanal">Trisemanal</option>
+            <option value="Mensual">Mensual</option>
+            <option value="BiMensual">BiMensual</option>
+            <option value="TriMensual">TriMensual</option>
         </select>
     </div>
     <div class="form-group m-2">
-        <label for="comicStatus">Publication Status</label>
+        <label for="comicStatus">Estado de publicacion</label>
         <select name="comicStatus" id="comicStatus">
-            <option value="Ongoing">Ongoing</option>
+            <option value="En-emision">En emision</option>
             <option value="Hiatus">Hiatus</option>
-            <option value="Finished">Finished</option>
-            <option value="Abandoned">Abandoned</option>
+            <option value="Terminado">Terminado</option>
+            <option value="Abandonado">Abandonado</option>
         </select>
     </div>
     <div class="form-group m-2">
-        <label for="isWriter">Is the user the comic writer?</label>
-        <input type="checkbox" name="isWriter" id="isWriter">
+        <label for="isWriter">El usuario es el autor del comic?</label>
+        <input type="checkbox" name="isWriter" id="isWriter" checked>
     </div>
     <div class="form-group m-2">
-        <label for="comicOgWriter">original Writer</label>
-        <input type="text" name="comicOgWriter" id="comicOgWriter" disabled>
+        <label for="comicWriter">Autor Original</label>
+        <input type="text" name="comicWriter" id="comicWriter" disabled>
     </div>
 
     <div class="form-group m-2">
-        <label for="selectedCats">Selected Categories</label>
-        <input type="text" name="selectedCats" id="selectedCats" disabled>
+        <label for="selectedCats">Categorias Seleccionadas</label>
+        <input type="text" name="selectedCats" id="selectedCats">
     </div>
 
     <div id="categories-block"></div>
-    <button type="button" id="addCat">Add another category</button>
-    <button type="button" id="revCat">Remove last category</button>
-    <button type="submit" id="register">Register</button>
+    <button type="button" id="addCat">Agregar Categoria</button>
+    <button type="button" id="revCat">Remover Ultima Categoria</button>
+    <button type="submit" id="register">Registrar</button>
 
 </form>
 
 <script>
     let check = document.getElementById('isWriter')
-    let og = document.getElementById('comicOgWriter')
+    let writer = document.getElementById('comicWriter')
     check.addEventListener('click', () => {
-        og.toggleAttribute('disabled')
+        if(!check.checked){
+            writer.toggleAttribute('disabled')
+            return
+        }
+        writer.toggleAttribute('disabled')
     })
+
     catAmount = 0;
     let cats = document.getElementById('categories-block')
     let addCat = document.getElementById('addCat')
@@ -86,6 +92,7 @@
 
     let selCats = document.getElementById('selectedCats');
     selCats.value = ""
+    selCats.toggleAttribute('readonly')
     let register = document.getElementById('register');
 
     cats.addEventListener('load',createCats())
@@ -113,7 +120,14 @@
         let counter = 1
         for(let i = 0; i < catGroup.length; i++){
             let catOption = document.createElement('option');
-            catOption.setAttribute('value',catGroup[i]);
+            if(catGroup[i]=== '---'){
+                catOption.setAttribute('value',"");
+                catOption.toggleAttribute('selected');
+                catOption.toggleAttribute('disabled');
+                catOption.toggleAttribute('hidden');
+            }else{
+                catOption.setAttribute('value',catGroup[i]);
+            }
             catOption.textContent = catGroup[i].toUpperCase();
             catSelect.appendChild(catOption);
             counter++;
@@ -146,10 +160,6 @@
             select.toggleAttribute('disabled')
             selCats.value = "";
         }
-    })
-
-    register.addEventListener('click',()=>{
-        selCats.toggleAttribute('disabled')
     })
 
 </script>

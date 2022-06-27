@@ -8,48 +8,47 @@
 <%- include ('../partials/message.ejs') %>
 
 <% if (comics.length > 0) { %>
-
     <% if (comicSelected.length > 0) { %>
-        <h1>Upload Chapter</h1>
-        <h3>Hint: only zip files can be uploaded</h3>
-        <h4 class="bg-danger text-light">Warning: pages NEED to be named ordered, or the upload will not work</h4>
-        <% let formUrl =  "/comic/upload/" + comicSelected[0].comicOgWriter +"/"+ comicSelected[0].comicOgName%>
+        <h1>Subir capitulo</h1>
+        <h3>Alerta: Solo se pueden subir archivos tipo .zip</h3>
+        <h4 class="bg-danger text-light">Alerta: Las paginas dentro del zip tienen que estar ordenadas en este formato, </h4>
+        <% let formUrl =  "/comic/upload/" + params.comicId +"/"+ params.comicName%>
         <form action="<%= formUrl %>" method="post" enctype="multipart/form-data">
-            <label for="numberChapter">Chapter number</label>
+            <label for="numberChapter">Numero del capitulor</label>
             <input type="number" min="1" name="numberChapter" required>
             <br>
-            <label for="tittleChapter">Chapter Tittle</label>
-            <input type="text" name="tittleChapter">
+            <label for="titleChapter">Titulo del capitulo</label>
+            <input type="text" name="titleChapter">
             <br>
-            <label for="chapterFile">Fiel to upload</label>
+            <label for="chapterFile">Archivo para subir</label>
             <input type="file" name="chapterFile" id="chapterFile" accept=".zip" required>
             <br>
-            <button type="submit">Upload</button>
+            <button type="submit">Subir</button>
         </form>
 
     <% } else {%>
 
-        <h2>Select a comic to upload a chapter</h2>
+        <h2>Selecciona un comic para subir un capitulo</h2>
         <br>
-        <h3>Uploaded Comics</h3>
+        <h3>Subir capitulos</h3>
 
         <% for( let i = 0; i < comics.length; i++ ) { %>
 
-            <% let uploadUrl = "/comic/upload/" + comics[i].comicOgWriter + "/" + comics[i].comicOgName%>
+            <% let uploadUrl = "/comic/upload/" + comics[i].id + "/" + comics[i].comicName%>
 
             <div class="comic comic-selection-upload-<%= i %> ">
                 <a href="<%= uploadUrl %> ">
                     <h3><%= comics[i].comicName %> </h3>
                     <h3><%= comics[i].comicDescription %> </h3>
-                    <% let imgSrc = "/uploads/"+comics[i].comicOgWriter +"/"+ comics[i].comicOgName +"/CoverImage-"+ comics[i].comicOgName +"."+(comics[i].comicCoverPath.split(".").pop()) %>
-                    <img src="<%= imgSrc %> " width="100px" height="100px">
+                    <img src="<%= comics[i].comicCoverPath %> " width="100px" height="100px">
                 </a>
-                <a href="/comic/profile/<%= comics[i].comicName %> ">Go to Comic</a>
+                <a href="/read/<%= comics[i].id %> ">Go to Comic</a>
             </div>
         <% } %>
     <% } %>
 
 <% } else {%>
+    <% console.log("longitud ",comics.length); %>
     <h1>User has no comics</h1>
 <% } %>
 

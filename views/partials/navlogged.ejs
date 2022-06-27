@@ -5,27 +5,31 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link text-light" href="/comic/upload">Upload/Edit</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link text-light" href="/comic/create">Create Comic</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link text-light" href="/comic/search">Search</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link text-light" href="/user/settings">Settings</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link text-light" href="/user/logout">Log Out</a>
-          </li>
-        </ul>
-        <form class="d-flex" action="/comic/search/" method="post">
+        <form class="d-flex" action="/search/" method="post">
           <input class="form-control me-2" type="text" placeholder="Search for a comic" aria-label="Search" name="comicSearch" id="comicSearch">
           <button class="btn btn-outline-success" type="submit">Search</button>
         </form>
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link text-light" href="/comic/upload">Subir/Editar comic</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-light" href="/comic/create">Crear Comic</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-light" href="/search">Buscar</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-light" href=<%= `/user/settings/${user.id}` %>>Configuracion</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-light" href="/logout">Cerrar sesion</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-light" href=<%= `/user/settings/${user.id}` %> ><%=  user.username%></a>
+          </li>
+        </ul>
+
       </div>
     </div>
 </nav>

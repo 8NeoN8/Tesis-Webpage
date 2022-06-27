@@ -8,6 +8,10 @@ h1{
     background-color: aqua;
 }
 
-#selectedCats{
-    color:white
+#comicSearch{
+    width: 20em;
+}
+
+.commentText{
+    resize: none;
 }

@@ -1,7 +1,7 @@
 <%- include ('../partials/head.ejs') %>
 
 <%- include ('../partials/message.ejs') %>
-<h1>Search Comic</h1>
+<h1>Buscar Comic</h1>
 
 <% if (user) { %>
     <h1>Hello <%= user.name %> </h1>
@@ -12,13 +12,13 @@
 <% if (comics.length > 0) { %>
     <% for( let i = 0; i < comics.length; i++ ) { %>
         <div class="comic_block_wrapper bg-secondary p-2">
-            <% let profileUrl = "/comic/profile/" + comics[i].comicName%>
+            <% let profileUrl = "/read/" + comics[i].dataValues.id%>
             <% let imgSrc = "/uploads/"+comics[i].comicOgWriter +"/"+ comics[i].comicOgName +"/CoverImage-"+ comics[i].comicOgName +"."+(comics[i].comicCoverPath.split(".").pop()) %>
             <div class="bg-dark p-2">
 
                 <a href="<%= profileUrl %> ">
-                    <img src="<%= imgSrc %>" width="100px" height="100px">
-                    <h3>Tittle: <%= comics[i].comicName %></h3>
+                    <img src="<%= comics[i].dataValues.comicCoverPath %>" width="100px" height="100px">
+                    <h3>title: <%= comics[i].comicName %></h3>
                     <h3>Author: <%= comics[i].comicWriter %></h3>
                     <h3>Status: <%= comics[i].comicStatus %></h3>
                 </a>
@@ -30,7 +30,7 @@
 <% } %>
 
 <% if (comics.length <= 0) { %>
-    <h1>Wow! There are no comics Uploaded!!!</h1>
+    <h1>Wow! No hay comics disponibles!</h1>
 <% } %>
 
 <%- include ('../partials/footer.ejs') %>

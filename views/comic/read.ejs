@@ -1,43 +1,55 @@
 <%- include ('../partials/head.ejs') %>
 <% if (user) { %>
-    <h1>Hello <%= user.name %> </h1>
+    <h1>Hola <%= user.name %> </h1>
     <%- include ('../partials/navLogged.ejs') %>
 <% } else { %>
     <%- include ('../partials/navGuest.ejs') %>
 <% } %>
 
-<% let nextPage = parseInt(chapter.currentPage) + 1 %>
-<% let prevPage = parseInt(chapter.currentPage) - 1 %>
-<% console.log(chapter.nextPrevLinks+"1") %>
+<section class='mainContainer container'>
+    <div class='container'>
 
-<div class="display-chapter-image">
+        <img src="<%= chapterPath+'/'+files[currentPage-1] %> " alt="Pagina uno" class='img-fluid d-block mx-auto'>
+        <div class="d-flex">
+            <% if (currentPage <= 1) { %>
+                <a href=<%= nextPage %> class='nav-link disabled' aria-disabled='true'>Previa</a>
+            <% } else {%>
+                <a href=<%= prevPage %> class='nav-link'>Previa</a>
+            <% } %>
 
-    <% if (chapter.currentPage <= 0) { %>
-        <img src="<%= chapter.theFunnyGuy %>" id="image">
+            <% if (currentPage >= amountPages) { %>
+                <a href=<%= nextPage %> class='nav-link disabled' aria-disabled='true'>Siguiente</a>
+            <% } else {%>
+                <a href=<%= nextPage %> class='nav-link'>Siguiente</a>
+            <% } %>
+        </div>
+
+    </div>
+</section>
+
+<section class="'commentsContainer container my-2">
+    <% if (user) { %>
+        <form class="commentPost" action=<%= Url %> method="post">
+            <label for="commentText">Escribe un commentario!</label>
+            <br>
+            <textarea class="commentText" name="commentText" id="commentText" cols="50" rows="3"></textarea>
+            <button type="submit">Comentar</button>
+        </form>
     <% } else {%>
-        <img src="<%= chapter.imagesUrl %>" id="image">
+        <a href="/login" class="my-2 p-1 bg-dark text-light">Inicia sesion para escribir un commentario</a>
     <% } %>
 
-    <% if (prevPage <= 0) { %>
-        <a href="<%= chapter.nextPrevLinks+"1" %>" id="prev">Previous</a>
-    <% } else {%>
-        <a href="<%= chapter.nextPrevLinks+prevPage %>" id="prev">Previous</a>
-    <% } %>
-
-    <% if (nextPage > chapter.pageAmout) { %>
-        <a href="<%= chapter.nextPrevLinks+chapter.pageAmout %>" id="next">Next</a>
-    <% } else {%>
-        <% if (nextPage <= 0) { %>
-            <a href="<%= chapter.nextPrevLinks+"2" %>" id="prev">next</a>
-        <% }  else { %>
-            <a href="<%= chapter.nextPrevLinks+nextPage %>" id="next">Next</a>
+    <% if (comments) { %>
+        <% for( let i = 0; i < comments.length; i++ ) { %>
+            <div class="my-2 p-2 bg-dark text-light w-50">
+                <h5><%= comments[i].username %> </h5>
+                <p><%= comments[i].commentText %> </p>
+                <br>
+            </div>
         <% } %>
-
     <% } %>
 
+</section>
 
-    <a href="<%= chapter.comicProfile %> ">Go to Comic</a>
-
-</div>
 
 <%- include ('../partials/footer.ejs') %>

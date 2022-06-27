@@ -2,15 +2,15 @@
 <%- include ('./partials/message.ejs') %>
 <body>
     <% if (user) { %>
-        <h1>Hello <%= user[0].name %> </h1>
-        <%- include ('./partials/navLogged.ejs') %>
+        <h1>Hola <%= user[0].dataValues.username %> </h1>
+        <%- include ('./partials/navLogged.ejs',{user:user[0].dataValues}) %>
     <% } else { %>
         <%- include ('./partials/navGuest.ejs') %>
     <% } %>
 
     <div class="position-relative " style="width: 100%;">
 
-        <h1 style="text-align:center;">Current users</h1>
+        <h1 style="text-align:center;">Usuarios registrados</h1>
 
         <% if (users.length > 0) { %>
             <div class="user p-2 bg-dark">
@@ -22,7 +22,7 @@
                 <% }) %>
             </div>
         <% }else {%>
-            <h3>There are no users registered</h3>
+            <h3>No hay usuarios registrados</h3>
         <% } %>
     </div>
 

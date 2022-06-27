@@ -3,143 +3,125 @@ const path = require('path');
 const pool = require('../database');
 const StreamZip = require('node-stream-zip');
 const { use } = require('passport');
+const models = require('../models/models');
 
-const create_get = (req, res) => {
-    res.render('comic/create', {tittle: 'Create Comic Entry',success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
+const create_get = async (req, res) => {
+    res.render('comic/create', {title: 'Create Comic Entry', success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
 }
 
 const create_post =  async (req, res) => {
+    console.log('entro');
+    console.log(req.body.comicName);
     try {
-
         let user;
         await req.user.then(e => {
             user = e[0];
         })
-        let fileName;
+        console.log(user.dataValues.id,"el primero id");
+
+        //Aqui se crea la fecha actual para asignar como valor por defecto de la fecha de inicio si el usuario no elige una
         let today = new Date();
         let dd = String(today.getDate()).padStart(2, '0');
-        let mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+        let mm = String(today.getMonth() + 1).padStart(2, '0');
         let yyyy = today.getFullYear();
-        today = yyyy + '/' + mm + '/' + dd;
+
+        today = mm + '/' + dd + '/' + yyyy;
+
+        //Verificando si el usuario es el autor del comic
         let writer;
-        let catAmount;
-        let cats = [];
-        let temp = false;
-        let unspacedWriter;
-
-        if (req.body.comicOgWriter) {
-            writer = req.body.comicOgWriter
+        if (req.body.comicWriter) {
+            writer = req.body.comicWriter
             console.log(writer);
-        }else writer = user.name
+        }else writer = user.dataValues.username
 
-        console.log("THE WRITER ", writer);
-
-        /* if(writer.includes(" ")){
-            unspacedWriter = writer.replace(" ","-")
-        }else unspacedWriter = writer */
-
-        if (req.body.isWriter) {
-            console.log("it is not the writer", req.body.isWriter);
-        } else console.log("it is the writer");
-
-        /* console.log(req.body.selectedCats);
-        let genres = req.body.selectedCats.split(',')
-        genres = genres.slice(1,genres.length+1)
-        console.log(genres); */
-
-
-        let tmpDirPath = './public/uploads/'+user.name
-        let dirPath = './public/uploads/'+user.name
-
-        if (req.body.isWriter) {
-            dirPath = './public/uploads/'+writer
+        //Eliminando espacios en el nombre del autor si los hay
+        if(writer.includes(" ")){
+            writer = writer.replace(" ","-")
+        }
+        //Eliminando espacios en el nombre del comic si los hay para evitar problemas de lectura con el programa
+        let comicName = req.body.comicName;
+        if (comicName.includes(" ")) {
+            comicName = req.body.comicName.replace(" ","-");
         }
 
+        //Directorio del comic
+        let dirPath = './public/uploads/'+comicName
+
+        //Verificando que exista el directorio del comic, si no existe, se crea
         if (!fs.existsSync(dirPath)) {
-            fs.mkdirSync(path.join(__dirname,'..','/public/uploads/',writer), err =>{
-                if(err) req.flash('error','There was a problem creating comic directory'), res.redirect('./comic/create')
+            fs.mkdirSync(path.join(__dirname,'..','/public/uploads/',comicName), err => {
+                if(err) {
+                    req.flash('error','Error. Hubo un problema al crear la carpeta del comic, intentelo de nuevo');
+                    res.redirect('./comic/create')
+                }
             })
         }
 
-        const tmpFiles = fs.readdirSync(tmpDirPath);
-        const files = fs.readdirSync(dirPath);
-
+        //Si se introdujo fecha de inicio se guarda, sino, se coloca automaticamente la fecha actual
+        let startDate = today;
         if (req.body.comicStart) {
             startDate = req.body.comicStart;
-        } else {
-            startDate = today;
         }
 
+        //Obteniendo la direccion del la portada para guardar y usar posteriormente
+        let fileName;
+        let coverPath;
+        let tmpPath = './public/uploads/'+comicName
+        const files = fs.readdirSync(tmpPath);
         for (const file of files) {
             if (file) {
-                if (file.toLowerCase().includes(("coverImage-"+req.body.comicName).toLowerCase())){
+                if (file.toLowerCase().includes((comicName+"-CoverImage").toLowerCase())){
                     fileName = file;
                     break;
                 }
             }
         }
+        coverPath = '/uploads/'+comicName+'/'+fileName;
+        console.log('coverPath :>> ', coverPath);
 
-        if (req.body.isWriter) {
-            for (const file of tmpFiles) {
-                if (file) {
-                    if (file.toLowerCase().includes(("coverImage-"+req.body.comicName).toLowerCase())){
-                        fileName = file;
-                        break;
-                    }
-                }
-            }
-        }
-
-        const chaptersPath = '/public/uploads/'+writer+'/'+req.body.comicName
-
-        if (!fs.existsSync("."+chaptersPath)){
-            fs.mkdirSync(("."+chaptersPath),err=>console.log(err))
-        }
-
-        let oldPath = await '/public/uploads/'+writer+'/'+fileName
-        console.log(oldPath);
-        let tmpPath = await '/public/uploads/'+user.name+'/'+fileName
-        console.log(tmpPath);
-
-        let newPath = await '/public/uploads/'+writer+'/'+req.body.comicName+'/'+fileName
-        console.log(newPath);
-
-        if (fs.existsSync(oldPath)) {
-            await fs.renameSync(path.join(__dirname,"..",oldPath), path.join(__dirname,"..",newPath), err => console.log(err))
-        }else await fs.renameSync(path.join(__dirname,"..",tmpPath), path.join(__dirname,"..",newPath), err => console.log(err))
-
-        const comic = {
-            comicName: req.body.comicName,
-            comicOgName: req.body.comicName,
+        //Creando y guardando el registro del comic
+        const comic = await models.ComicEntry.create({
+            comicUploader_id: user.dataValues.id,
+            comicName: comicName,
             comicDescription: req.body.comicDescription,
-            comicSchedule: req.body.comicSchedule,
-            comicStart: startDate,
             comicStatus: req.body.comicStatus,
-            comicCoverPath: '/uploads/'+writer+'/'+req.body.comicName+'/'+fileName,
+            comicSchedule: req.body.comicSchedule,
             comicWriter:writer,
-            comicOgWriter:writer,
-            comicUploader: user.name,
-            comicAdded: today,
-            comicUpdated: today,
-            userID: user.id,
-        }
-
-        const genres = {
-            genresNames: req.body.selectedCats,
-            genresComic: comic.comicName
-        }
-
-        await pool.query('USE tesis;');
-        await pool.query('INSERT INTO comics set ?',[comic])
-
-        await pool.query('INSERT INTO genres set ?',[genres])
-            .then(req.flash('success','Comic registered successfuly'))
-            .then(res.redirect('../'))
+            comicCoverPath: coverPath,
+            comicCategories:req.body.selectedCats,
+            comicStart: startDate
+        })
+        .then(req.flash('success','El comic se aregistrado exitosamente'))
+        .then(res.redirect('../'))
+        console.log(JSON.stringify(comic))
 
     } catch (err) {
-        req.flash('error','Error. Could not create Comic')
+        req.flash('error','Error. No se pudo crear el comic, intentelo de nuevo')
         console.log(err);
         res.redirect('../comic/create')
+
+        //Si hubo un problema se elimina la carpeta del comic para permitir un nuevo intento
+        try {
+            let path = './public/uploads/'+req.body.comicName
+
+            function deleteFolderRecursive(path) {
+              if( fs.existsSync(path) ) {
+                  fs.readdirSync(path).forEach(function(file) {
+                    var curPath = path + "/" + file;
+                      if(fs.lstatSync(curPath).isDirectory()) { // recurse
+                          deleteFolderRecursive(curPath);
+                      } else { // delete file
+                          fs.unlinkSync(curPath);
+                      }
+                  });
+                  fs.rmdirSync(path);
+                }
+            };
+            deleteFolderRecursive(path);
+        } catch (error) {
+            console.log(error);
+        }
+
     }
 }
 
@@ -149,21 +131,33 @@ const upload_get = async (req, res) => {
     let comicSelected = [];
     let comics = [];
 
-    await pool.query('USE tesis')
-    comics = await pool.query('SELECT * FROM comics WHERE comicUploader = ?',[user[0].name])
-
-    if(Object.keys(params).length > 0){
-        comicSelected = await pool.query('SELECT * FROM comics WHERE comicOgWriter = ?',[params.writer])
-        if (comicSelected.length > 0) {
-            res.render('comic/chooseComic', {tittle: 'Upload Comic Chapter',user:user, comics:comics, comicSelected:comicSelected,success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
-        }else{
-            req.flash('error','Error. No comic found')
-            res.redirect('../')
+    const uploaderComics = await models.ComicEntry.findAll({
+        where: {
+            comicUploader_id: user[0].dataValues.id,
         }
+    })
 
-    }else{
-        res.render('comic/chooseComic', {tittle: 'Upload Comic Chapter',user:user, comics:comics, comicSelected: comicSelected,success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
+    for (let i = 0; i <= uploaderComics.length-1; i++) {
+        comics[i] = uploaderComics[i].dataValues
     }
+
+    if (await req.params) {
+        if(Object.keys(params).length > 0){
+            comicSelected = await models.ComicEntry.findAll({
+                where:{
+                    comicName: params.comicName
+                }
+            })
+            if (comicSelected.length > 0) {
+                res.render('comic/chooseComic', {title: 'Upload Comic Chapter',params:params, user:user, comics:comics, comicSelected:comicSelected, success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
+            }else{
+                res.redirect('../')
+            }
+        }else{
+            res.render('comic/chooseComic', {title: 'Upload Comic Chapter',params:params,user:user, comics:comics, comicSelected: comicSelected, success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
+        }
+    } else res.render('comic/chooseComic', {title: 'Upload Comic Chapter',params:params,user:user, comics:comics, comicSelected: comicSelected, success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
+
 
 }
 
@@ -174,281 +168,261 @@ const upload_post = async (req, res) => {
             user = e[0];
         })
         let params  = req.params;
-
-        let dirPath = './public/uploads/'+params.writer;
-        let chaptersPath = '/public/uploads/'+params.writer+'/'+params.comic;
         let fileName;
         let bodynumber = req.body.numberChapter;
-        let bodytittle = req.body.tittleChapter;
-        let bodycomic = params.comic
-        let filePath;
-        let oldPath;
-        let newPath;
+        let dirPath = './public/uploads/'+params.comicName+'/capitulo-'+bodynumber;
 
         const files = fs.readdirSync(dirPath);
+        console.log(path.extname(files[0]),' del array');
 
 
         for (const file of files) {
-            if (!path.extname(file)) {console.log("no extension?"); continue}
 
-            filePath = dirPath+'/'+path.basename(file)
-            console.log("antes del if de extension");
+            let filePath = dirPath+'/'+path.basename(file);
 
             if (path.extname(file) !== ".zip" && path.extname(file) !== ".7z") {
                 console.log("dentro del if");
                 try {
-                    fs.unlinkSync(filePath)
-                    console.log("se borro por se invalido");
-                    req.flash('error','The file is not a .zip or .7z')
-                    res.redirect('../'+params.writer+'/'+params.comic)
+                    fs.unlinkSync(filePath).then(console.log("se borro por ser invalido"));
+                    fs.rmdirSync(dirPath)
+                    req.flash('error','El archivo que se subio no es .zip o .7z');
+                    res.redirect('../'+params.comicUploader+'/'+params.comicName);
                 } catch (err) {
                     console.log(err);
-                    console.log("error random");
-                    req.flash('error','A problem ocurred when trying to delete unvalid chapter file')
-                    res.redirect('../'+params.writer+'/'+params.comic)
-                    break
+                    req.flash('error','Ocurrio un problema tratando de borrar el archivo invalido');
+                    res.redirect('../'+params.comicUploader+'/'+params.comicName);
+                    break;
                 }
             }
 
             fileName = path.basename(file);
+            console.log(fileName,' en el for');
 
-            console.log("es un zip valido");
 
-            if (!fs.existsSync("."+chaptersPath)){
-                req.flash('error','Error. The selected comic does not exist, please create it first')
-                rq.redirect('../../create')
-            } else console.log("existe el comic");
+            const zipfile = './public/uploads/'+params.comicName+'/capitulo-'+bodynumber+'/'+fileName;
 
-            oldPath = await '/public/uploads/'+params.writer+'/'+fileName
-            newPath = await '/public/uploads/'+params.writer+'/'+params.comic+'/'+'chap'+bodynumber+path.extname(file)
+            console.log('zipfile :>> ', zipfile);
 
-            if (fs.existsSync("./public/uploads/"+params.writer+"/"+bodycomic+"/chap"+bodynumber)){
-                console.log("No esta el archivo, se entiende que se borro pór no ser valido");
-                req.flash('error','Error. The chapter is already created, please delete it before reuploading');
-                res.redirect('../../upload/');
-                return
-            }
+            const zip = new StreamZip.async({file: zipfile})
 
-            await fs.renameSync(path.join(__dirname,"..",oldPath), path.join(__dirname,"..",newPath), err => console.log(err))
-
-            console.log("se movio el capitulo a la carpeta del comic");
-
-            if (await fs.existsSync("."+newPath)) {
-                console.log("el capitulo si esta dentro del comic");
-            }
-
-            const eachfile = "."+newPath
-
-            console.log(eachfile);
-
-            const zip = new StreamZip.async({file: eachfile})
-
-            if(!fs.existsSync("./public/uploads/"+params.writer+"/"+bodycomic+"/chap"+bodynumber)){
-                fs.mkdirSync("./public/uploads/"+params.writer+"/"+bodycomic+"/chap"+bodynumber);
-            }
-
-            const count = await zip.extract(null,"./public/uploads/"+params.writer+"/"+bodycomic+"/chap"+bodynumber)
+            const count = await zip.extract(null,`./public/uploads/${params.comicName}/capitulo-${bodynumber}`)
             console.log(`Extracted ${count} entries`);
             zip.on('entry', entry => {
                 console.log(`Read entry ${entry.name}`);
             });
 
             await zip.close();
-            fs.unlinkSync('.'+newPath)
-        }
+            fs.unlinkSync(zipfile);
+        };
 
-
-        chapterPages = './public/uploads/'+params.writer+'/'+params.comic+'/'+'chap'+bodynumber
-        const allPages = fs.readdirSync(chapterPages)
-
+        const allPages = fs.readdirSync(dirPath);
         console.log(allPages);
 
         for (const page of allPages) {
             if (path.extname(page) !== '.jpg' && path.extname(page) !== '.png' && path.extname(page) !== '.jpeg') {
-
-                fs.unlinkSync(chapterPages)
-                req.flash('error','Error. One of the files in the zip file is not valid, please make all files valid images(jpeg, jpg, png)')
-                res.redirect('../'+params.writer+'/'+params.comic);
+                for (const page of allPages) {
+                    fs.unlinkSync(page)
+                }
+                fs.rmdirSync(chapterPages)
+                req.flash('error','Oops, parece que subiste imagenes con formatos diferentes a los permitidos: jpeg, jpg, png. Por favor vuelve a intentarlo.')
+                res.redirect('../'+params.comicUploader+'/'+params.comicName);
+                throw "Los archivos dentro del zip no eran imagenes validas"
             }
-        }
+        };
+        let comic = await models.ComicEntry.findAll({
+            where:{
+                comicName: params.comicName
+            }
+        })
 
-        let chapterObj = {
-            chapterTittle: req.body.tittleChapter,
+        console.log('comic :>> ', JSON.stringify(comic));
+        comic = comic[0].dataValues
+        console.log('comic.id :>> ', comic.id);
+
+        const chapter = await models.ChapterEntry.create({
+            chapterTitle: req.body.titleChapter,
             chapterNumber: req.body.numberChapter,
-            chapterComic: params.comic
-        }
-        console.log(chapterObj);
-
-        await pool.query('USE tesis');
-        await pool.query('INSERT INTO chapters set ?',[chapterObj])
-        req.flash('success','Chapter registered Successfully');
-        res.redirect('../profile/params.comic')
-
-        //await pool.query('SELECT * FROM chapters WHERE comicName = ?',[params.comic])
+            comic_id: comic.id}
+        );
+        console.log('chapter :>> ', JSON.stringify(chapter));
+        req.flash('success','Capitulo subido con exito');
+        res.redirect('../');
 
     } catch (err) {
+        req.flash('error','Error. No se pudo subir el capitulo, intentelo de nuevo')
         console.log(err);
-        req.flash('error','Error. Something unexpected went wrong')
-        res.redirect('../')
+
+        let path = './public/uploads/'+req.params.comicName+'/capitulo-'+req.body.numberChapter;
+
+        function deleteFolderRecursive(path) {
+          if( fs.existsSync(path) ) {
+              fs.readdirSync(path).forEach(function(file) {
+                var curPath = path + "/" + file;
+                  if(fs.lstatSync(curPath).isDirectory()) { // recurse
+                      deleteFolderRecursive(curPath);
+                  } else { // delete file
+                      fs.unlinkSync(curPath);
+                  }
+              });
+              fs.rmdirSync(path);
+            }
+            console.log('borrado');
+        };
+        deleteFolderRecursive(path);
+        res.redirect('../comic/upload')
+
     }
-}
-
-const search_get = async (req, res) => {
-
-    await pool.query('USE tesis');
-    let comics = await pool.query('SELECT * FROM comics');
-
-    if (await req.user) {
-        let user;
-        await req.user.then(e => {
-            user = e[0];
-            res.render('comic/search', {tittle: 'Search Comic', user:user, comics: comics,success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
-        })
-        return
-    }
-
-    res.render('comic/search', {tittle: 'Search Comic', comics: comics,success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
-}
-
-const search_post = async (req, res) => {
-    let user;
-    if(req.user){
-        await req.user.then(e => {
-        user = e[0];
-    })
-    }
-    let comicName = await req.body.comicSearch;
-    //console.log(comicName);
-
-    await pool.query('USE tesis');
-    let comics = await pool.query('SELECT * FROM comics WHERE comicName = ?',[comicName]);
-    if (comics.length<=0) {
-        req.flash('error','No comic found');
-        res.redirect('../search')
-    }
-
-
-    res.render('comic/search', {tittle: 'Search Comic', user:user, comics: comics ,success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
 }
 
 const profile_get = async (req,res) => {
-    const params = req.params
-    const comicN = params.comicName
+    const comicId = req.params.comicId
     let user;
+    let uploader = false;
     if(req.user){
         await req.user.then(e => {
             user = e[0];
         })
     }
-    let uploader = false;
 
-    await pool.query('USE tesis');
+    const comicEntry = await models.ComicEntry.findOne({
+        where:{
+            id: comicId
+        }
+    })
 
-    let comic = await pool.query("SELECT * FROM comics WHERE comicName = ?",[comicN])
+    const comic = comicEntry.dataValues;
 
-    console.log(comicN);
-
-    let chapterArr = await pool.query('SELECT * FROM chapters WHERE chapterComic = ?',[comicN])
-    let genresString = await pool.query('SELECT * FROM genres WHERE genresComic = ?',[comicN])
-    let fileNames = [];
-    let fileArr = [];
-    let genresArr = [];
-    let chapterCount = 0;
-
-    console.log(chapterArr);
 
     if (user) {
-        if (user.name === comic[0].comicUploader) {
+        if (user.dataValues.id === comic.comicUploader_id) {
             uploader = true
         }
     }
 
-    if (comic.length > 0) {
-        //console.log(comic)
-
-        let dirPath = './public/uploads/'+comic[0].comicOgWriter+'/'+comic[0].comicOgName
-
-        if (!fs.existsSync(dirPath)) {
-            req.flash('error','Error. The comic does not exist')
-            res.redirect('../search')
+    const chapterArr = await models.ChapterEntry.findAll({
+        where:{
+            comic_id: comic.id
         }
+    })
 
-        const files = fs.readdirSync(dirPath);
-        console.log(files);
+    let chapters = []
 
-        if (files.length > 0){
-            for (let i = 0; i < files.length; i++) {
-                if (!path.extname(files[i])){
-                    fileNames[i] = path.basename(files[i]);
-                    //console.log(fileNames[i],"uno por uno");
-                }
-            }
-
-            fileArr = fileNames.filter(element => {
-                if (Object.keys(element).length !== 0) {
-                  return true;
-                }
-                return false;
-            });
-            chapterCount = files.length
-            genresArr = JSON.stringify(genresString[0].genresNames);
-            genresArr = genresArr.split(',');
-            genresArr = genresArr.slice(1,genresArr.length+1)
-            //console.log(chapterArr);
-        }
+    for (const chapter of chapterArr) {
+        chapters.push(chapter.dataValues);
     }
-    res.render('./comic/profile',{comic:comic, isUploader: uploader, fileNames:fileArr, genres: genresArr, chapterArr:chapterArr , chapCount: chapterCount,tittle: comicN, user:user,success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
-}
 
-const userFolder = async (req, res,next) => {
-    let user;
-        await req.user.then(e => {
-            user = e[0];
-        })
+    let categories = comic.comicCategories.split(',');
+    categories.shift()
 
-    const dirPath = './public/uploads/'+user.name
-
-    if (!fs.existsSync(dirPath)) {
-        fs.mkdirSync(path.join(__dirname,'..','/public/uploads/',user.name), err =>{
-            if(err) console.log(err), res.send('problema al crear directorio')
-        })
-    }
-    next();
+    res.render('./comic/profile',{ isUploader: uploader, comic:comic, categories: categories, chapters:chapters ,title: comic.comicName, user:user, success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
 }
 
 const read_get = async (req, res) =>{
 
-    let user; if(req.user) await req.user.then( e => {user = e[0]} )
-    let params = req.params
-    let chapterNumber = params.chapter
-    let comicName = params.comicName
-    let chapterPage = params.page
-    let ext;
+    let user; if (req.user) await req.user.then( e => {user = e[0]} );
+    const params = req.params;
+    console.log(params);
 
-    await pool.query('USE tesis')
-    let comic = await pool.query('SELECT * FROM comics WHERE comicOgName = ?',[comicName])
+    let Comic = await models.ComicEntry.findAll({
+        where:{
+            id: params.comicId
+        }
+    })
+    Comic = Comic[0].dataValues
+    console.log('el comic: >>',Comic);
 
+    let chapters = await models.ChapterEntry.findAll({
+        where: {
+            comic_id: params.comicId,
+            chapterNumber: params.chapter
+        }
+    })
+    chapters = chapters[0].dataValues;
+    console.log('chapters:>> ',chapters);
 
-    let dirPath = "./public/uploads/"+comic[0].comicOgWriter+"/"+comic[0].comicOgName+"/"+chapterNumber
-    let files = fs.readdirSync(dirPath);
-    ext = files[0].split('.').pop();
-    let pageAmout = files.length
+    const dirPath = "./public/uploads/"+Comic.comicName+"/capitulo-"+params.chapter;
+    console.log('dirPath :>> ', dirPath);
 
-    let chapter ={
-        dirPath: "/uploads/"+comic[0].comicOgWriter+"/"+comic[0].comicOgName+"/"+chapterNumber,
-        imagesUrl: "/uploads/"+comic[0].comicOgWriter+"/"+comic[0].comicOgName+"/"+chapterNumber+"/pag"+chapterPage+"."+ext,
-        nextPrevLinks:"/comic/read"+"/"+comic[0].comicOgName+"/"+chapterNumber+"/",
-        theFunnyGuy:"/uploads/"+comic[0].comicOgWriter+"/"+comic[0].comicOgName+"/"+chapterNumber+"/pag1"+"."+ext,
-        files: files,
-        chapterNumber: chapterNumber,
-        currentPage: chapterPage,
-        pageAmout: pageAmout,
-        comicProfile: "/comic/profile/"+comic[0].comicOgName
+    const files = fs.readdirSync(dirPath);
+    console.log('files :>> ', files);
+
+    const amountPages = files.length;
+    console.log('Amount of pages :>> ', amountPages);
+
+    const title = 'Leer '+Comic.comicName+' - '+params.chapter;
+
+    const chapterPath = `/uploads/${Comic.comicName}/capitulo-${params.chapter}`
+    let currentPage = parseInt(params.page);
+    let prev = currentPage-1;
+    let next = currentPage+1;
+
+    if (currentPage <= 0) {
+        currentPage = 1;
     }
-    console.log(chapter);
-    let tittle = 'read '+comicName+' '+chapterNumber;
 
-    res.render('comic/read', {tittle: tittle, user:user, chapter: chapter})
+    if (currentPage === 1) {
+        prev = 1;
+    }
+
+    if (currentPage >= amountPages) {
+        currentPage = amountPages;
+        prev = currentPage-1
+        next = amountPages;
+    }
+
+    const currentLink = `/read/${Comic.id}/${params.chapter}/${currentPage}`
+    const nextPage = `/read/${Comic.id}/${params.chapter}/${next}`
+    const prevPage = `/read/${Comic.id}/${params.chapter}/${prev}`
+
+    let comments = await models.CommentEntry.findAll({
+        where:{
+            comic_id: Comic.id,
+            chapter_id: chapters.id
+        }
+    })
+
+    for (let i = 0; i < comments.length; i++) {
+        comments[i] = comments[i].dataValues;
+        let user = await models.UserEntry.findByPk(comments[i].user_id);
+        comments[i].username = user.username;
+    }
+
+    console.log('commentarios: >>',comments);
+
+    const Url =  req.originalUrl;
+
+    console.log(Url);
+
+    res.render('comic/read',{title: title, user:user, comic:Comic, chapters:chapters, chapterPath:chapterPath, files:files, amountPages:amountPages, currentPage:currentPage, prevPage:prevPage, nextPage:nextPage, currentLink:currentLink, comments:comments, Url:Url})
+}
+
+const read_post = async (req, res) =>{
+    let user; if (req.user) await req.user.then( e => {user = e[0].dataValues} );
+    params = req.params
+
+    const chapter = await models.ChapterEntry.findOne({
+        where: {
+            id: params.chapter,
+            comic_id: params.comicId,
+        }
+    })
+
+    const comic = await models.ComicEntry.findOne({
+        where: {
+            id: params.comicId
+        }
+    })
+
+    const comment = await models.CommentEntry.create({
+        user_id: user.id,
+        chapter_id: chapter.dataValues.id,
+        comic_id: comic.dataValues.id,
+        commentText: req.body.commentText
+    })
+
+    console.log('Comment :>> ', comment.dataValues);
+
+    res.redirect('back')
 }
 
 const edit_comic_get = async (req, res) => {
@@ -465,7 +439,7 @@ const edit_comic_get = async (req, res) => {
     }
 
     if (user.name == uploader) {
-        res.render('comic/editComic', {tittle: 'Edit Comic Entry',uploader:uploader,comic:comic, success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
+        res.render('comic/editComic', {title: 'Edit Comic Entry',uploader:uploader,comic:comic, success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
     }
 }
 
@@ -637,11 +611,9 @@ module.exports = {
     create_post,
     upload_get,
     upload_post,
-    search_get,
-    search_post,
     profile_get,
-    userFolder,
     read_get,
+    read_post,
     edit_comic_get,
     edit_comic_post,
     delete_comic_get,

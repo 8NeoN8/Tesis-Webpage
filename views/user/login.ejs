@@ -1,10 +1,10 @@
 <%- include ('../partials/head.ejs') %>
-<h1>Login</h1>
+<h1>Iniciar Sesion</h1>
 
 <%- include ('../partials/message.ejs') %>
 
 <% if (user) { %>
-    <h1>Hello <%= user[0].name %> </h1>
+    <h1>Hola <%= user[0].name %> </h1>
     <%- include ('../partials/navLogged.ejs') %>
 <% } else { %>
     <%- include ('../partials/navGuest.ejs') %>
@@ -12,17 +12,17 @@
 
 
 
-<form action="/user/login" method="post" class="p-3 my-2 bg-dark text-light">
+<form action="/login" method="post" class="p-3 my-2 bg-dark text-light">
 
     <div class="form">
 
         <label for="email">Email</label>
         <input type="email" name="email" id="email" required>
 
-        <label for="password">Password</label>
+        <label for="password">Contraseña</label>
         <input type="password" name="password" id="password" required>
 
-        <button type="submit" class="btn btn-primary">Login</button>
+        <button type="submit" class="btn btn-primary">Iniciar Sesion</button>
 
     </div>
 </form>

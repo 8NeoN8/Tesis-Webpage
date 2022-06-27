@@ -1,11 +1,11 @@
-<% if(message) { %>
+<% if(message && message.length >0) { %>
     <h3 style="color: white; background-color:blue;"> <%= message %> </h3>
 <% } %>
 
-<% if(success) { %>
+<% if(success && success.length >0) { %>
     <h3 style="color: white; background-color:limegreen;"> <%= success %> </h3>
 <% } %>
 
-<% if(error) { %>
+<% if(error && error.length >0) { %>
     <h3 style="color: white; background-color:red;"> <%= error %> </h3>
 <% } %>

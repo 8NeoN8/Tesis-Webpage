@@ -1,37 +1,26 @@
 <%- include ('../partials/head.ejs') %>
-<h1>Register</h1>
+<h1>Registro</h1>
 
 <%- include ('../partials/message.ejs') %>
 
-<% if (user) { %>
-    <h1>Hello <%= user[0].name %> </h1>
-    <%- include ('../partials/navLogged.ejs') %>
-    <h1>Already Logged in </h1>
-    <a href="../">Login</a>
+<%- include ('../partials/navGuest.ejs') %>
 
-<% } else { %>
-    <%- include ('../partials/navGuest.ejs') %>
-    
-    <form action="/user/register" method="post">
-
+    <form action="/register" method="post">
         <div>
-            
-            <label for="name">Name</label>
-            <input type="text" name="name" id="name" required>
-    
+            <label for="username">Nombre de usuario</label>
+            <input type="text" name="username" id="username" required>
+
             <label for="email">Email</label>
             <input type="email" name="email" id="email" required>
-    
-            <label for="password">Password</label>
+
+            <label for="password">Contraseña</label>
             <input type="password" name="password" id="password" required>
-    
-            <button type="submit">Register</button>
-    
+
+            <button type="submit">Registrar</button>
+
         </div>
-    
+
     </form>
-    
-    <% } %>
 
 <%- include ('../partials/footer.ejs') %>
 

@@ -1,12 +1,176 @@
 <%- include ('../partials/head.ejs') %>
-<h1>Settings</h1>
+<%- include ('../partials/message.ejs') %>
+<h1>Configuracion</h1>
 
 <% if (user) { %>
-    <h1>Hello <%= user[0].name %> </h1>
-    <%- include ('../partials/navLogged.ejs') %>
+    <h1>Hello <%= user[0].dataValues.username %> </h1>
+    <%- include ('../partials/navLogged.ejs',{user:user[0].dataValues}) %>
 <% } else { %>
     <h1>user not logged in</h1>
     <%- include ('../partials/navGuest.ejs') %>
 <% } %>
+
+<form action=<%= `../settings/${user[0].dataValues.id}` %>  method="post" enctype="multipart/form-data">
+
+    <h4>Opciones de Comic</h4>
+
+    <label for="pageTurn">Direccion de cambio de imagen (cambia el lugar de los botones)</label>
+    <select name="pageTurn" id="pageTurn">
+        <option selected></option>
+        <option value="lr"> izquierda-Derecha </option>
+        <option value="rl">Derecha-Izquierda</option>
+        <option value="ud">Arriba-Abajo</option>
+        <option value="du">Abajo-Arriba</option>
+    </select>
+    <br>
+
+    <label for="imgScalling">Escalado de imagen</label>
+    <select name="imgScalling" id="imgScalling">
+        <option selected></option>
+        <option value="screen">Encajar a pantalla</option>
+        <option value="horizontal">Encajar horizontal</option>
+    </select>
+    <br>
+
+    <label for="jumpPage">Saltar al cambiar de pagina</label>
+    <select name="jumpPage" id="jumpPage">
+        <option selected></option>
+        <option value="nojump">No Saltar</option>
+        <option value="imgTop">Tope de imagen</option>
+        <option value="imgBottom">Final de imagen</option>
+    </select>
+    <br>
+
+    <input class="colorfilter">
+        <label for="colorFilter">Filtros</label>
+        <select name="colorFilter" id="colorFilter">
+            <option selected></option>
+            <option value="#ffae00">Naranja</option>
+            <option value="#00d9ff">Celeste</option>
+            <option value="#000000">Negro</option>
+            <option value="#a1723b">Marron</option>
+            <option value="none">Ninguno</option>
+            <option value="#ffffff">Personalizado</option>
+        </select>
+        <br>
+        <label for="customColor">ColorPersonalizado</label>
+        <input type="color" name="customColor" id="customColor" value="#ffffff">
+        <br>
+        <label for="filterOnOf">Aplicar filtro?</label>
+        <br>
+        <label for="filterOn">Si</label>
+        <input type="radio" name="filterOnOff" id="filterOn" value="on">
+        <label for="filterOff">No</label>
+        <input type="radio" name="filterOnOff" id="filterOff" value="off">
+    </div>
+    <br>
+
+    <label for="imgDisplay">Imagenes a mostrar</label>
+    <select name="imgDisplay" id="imgDisplay">
+        <option selected></option>
+        <option value="1">1 Pagina</option>
+        <option value="3">3 Paginas</option>
+        <option value="5">5 Paginas</option>
+        <option value="all">Todas las Paginas</option>
+
+    </select>
+    <br>
+
+    <label for="focusMode">Modo Focus</label>
+    <label for="focusOn">Si</label>
+    <input type="radio" name="focusMode" id="focusOn" value="on">
+    <label for="focusOff">No</label>
+    <input type="radio" name="focusMode" id="focusOff" value="off">
+    <br>
+    <br>
+
+    <h4>Opciones de usuario</h4>
+
+    <label for="username">Nombre de usuario</label>
+    <input type="text" name="username" id="username">
+    <br>
+    <label for="email">E-mail</label>
+    <input type="email" name="email" id="email">
+    <br>
+
+    <label for="userPfp">Imagen de Perfil</label>
+    <input type="file" name="userPfp" id="userPfp">
+    <br>
+    <img id="pfpImg" src=" " width="200px" height="200px" hidden>
+    <br>
+
+    <label for="theme">Tema de color</label>
+    <select name="theme" id="theme">
+        <option></option>
+        <option value="dark">Oscuro</option>
+        <option value="light">Claro</option>
+    </select>
+    <br>
+
+    <h5>Si quieres cambiar la contraseña, debes primero colocar tu contraseña actual y luego confirmar la nueva contraseña</h5>
+    <label for="oldPassword">Contraseña Actual</label>
+    <input type="password" name="oldPassword" id="oldPassword">
+    <br>
+    <label for="newPassword">Nueva Contraseña</label>
+    <input type="password" name="newPassword" id="newPassword">
+    <br>
+    <label for="confirmNewPassword">Confirmar Nueva Contraseña</label>
+    <input type="password" name="confirmNewPassword" id="confirmNewPassword">
+    <br>
+
+    <button id="userDeleteButton" class="btn-danger">Eliminar Usuario</button>
+
+    <button class="btn-primary" type="submit">Guardar</button>
+</form>
+
+<form action=<%= `user/deleteUser/${user[0].dataValues.id}` %> hidden>
+
+    <h2>Estas seguro que quieres borrar tu usuario?</h2>
+
+    <label for="confirmDelete">Confirmar con Contraseña</label>
+    <input type="password" name="confirmDelete" id="confirmDelete">
+
+    <button class="btn-danger" type="submit">Eliminar</button>
+
+</form>
+
+ <!--
+        *page turning
+            left-right
+            right-left
+            up-down
+            down-up
+        *image scalling
+            fit-horizontally(original with)
+            fit-screen(scalled to view height)
+        *jump on page turn
+            top of image
+            top of controls
+            don't jump
+        *image color filter
+            color display
+            custom color
+        *only image display
+            shows only the image on a black background and a button to get out of this display
+
+    -->
+
+<script>
+    let pfpImg = document.getElementById('pfpImg')
+    let input = document.getElementById('userPfp');
+    input.addEventListener('change',()=>{
+        if(event.target.files[0]){
+            if(pfpImg.hasAttribute('hidden')){
+                pfpImg.toggleAttribute('hidden')
+                pfpImg.src = URL.createObjectURL(event.target.files[0])
+            }else{
+                pfpImg.src = URL.createObjectURL(event.target.files[0])
+            }
+        }else{
+            if(!pfpImg.hasAttribute('hidden')) pfpImg.toggleAttribute('hidden')
+        }
+    })
+    //history.replaceState("","","/login")
+</script>
 
 <%- include ('../partials/footer.ejs') %>

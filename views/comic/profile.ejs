@@ -5,69 +5,44 @@
 <% } else { %>
     <%- include ('../partials/navGuest.ejs') %>
 <% } %>
-<h1>AQUI VA EL PERFIL DEL COMIC</h1>
-
-<% if (chapterArr) { %>
-    <% console.log("a"); %>
-<% } %>
-<% if (genres) { %>
-    <% console.log("b"); %>
-<% } %>
+<h1>PERFIL DEL COMIC</h1>
 <% if (comic) { %>
-    <% let readUrl = '../comic/read/' %>
-    <h1><a href="<%=  %> "></a></h1>
-    <h1><%= comic[0].comicName %> </h1>
-    <h1><%= comic[0].comicDescription %> </h1>
-    <% let imgSrc = "/uploads/"+comic[0].comicOgWriter +"/"+ comic[0].comicOgName +"/CoverImage-"+ comic[0].comicOgName +"."+(comic[0].comicCoverPath.split(".").pop()) %>
-    <img src="<%= imgSrc %>" alt="">
+    <% let readUrl = `/read/${comic.id}/1/1` %>
+    <h1><a href="<%= readUrl %> ">LEER</a></h1>
+    <h2><%= comic.comicName %> </h2>
+    <h2><%= comic.comicDescription %> </h2>
+    <% console.log(comic.comicCoverPath); %>
+    <img src="<%= comic.comicCoverPath %>" alt="">
     <div class="text-dark">
-        Tags
-        <% for( let i = 0; i < genres.length; i++ ) { %>
-          <p><%= genres[i] %> </p>
+        <h3>Categorias</h3>
+        <% for( let i = 0; i < categories.length; i++ ) { %>
+          <p><%= categories[i] %> </p>
         <% } %>
     </div>
 
     <% if (isUploader) { %>
-        <% console.log("chapterArr"); %>
-        <% if (comic[0].comicName.includes(" ")) { %>
-            <% let comicNameUnSp = comic[0].comicName.replaceAll(" ","-") %>
-            <% let deleteComic =  "/comic/delete/"+user.name+"/"+comicNameUnSp %>
-            <% let editComic =  "/comic/edit/"+user.name+"/"+comicNameUnSp %>
-            <a href=<%= editComic %> id="editComicLink">Edit comic</a>
-            <a href=<%= deleteComic%> id="deleteComicLink">Delete comic</a>
-        <% } else {%>
-            <% let deleteComic =  "/comic/delete/"+user.name+"/"+comic[0].comicName %>
-            <% let editComic =  "/comic/edit/"+user.name+"/"+comic[0].comicName %>
-            <a href=<%= editComic %> id="editComicLink">Edit comic</a>
-            <a href=<%= deleteComic%> id="deleteComicLink">Delete comic</a>
-        <% } %>
-
+        <% console.log("es el que lo subio"); %>
+        <a href=<%= `/comic/edit/${user.id}/${comic.id}` %> id="editComicLink">Editar comic</a>
+        <a href=<%= `/comic/delete/${user.id}/${comic.id}` %> id="deleteComicLink">Eliminar comic</a>
     <% } %>
 
-<% } %>
-
-<% if (fileNames) { %>
-    <% console.log("fileNames");  %>
-    <% for( let i = 0; i < fileNames.length; i++ ) { %>
-        <% let files = fileNames[i].split('.') %>
-        <h1>
-            <% let chapterLink = "../read/"+ comic[0].comicOgName+"/"+files[0]+"/1"%>
-            <a href="<%= chapterLink %>">
-                <%= files[0]+" - "+chapterArr[i].chapterTittle %>
-            </a>
-            <% if (isUploader) { %>
-                <% if (comic[0].comicName.includes(" ")) { %>
-                    <% let comicNameUnSp = comic[0].comicName.replaceAll(" ","-") %>
-                    <% let deleteChapter = "/comic/delete/"+user.name+"/"+comicNameUnSp+"/"+files[0] %>
-                    <a href=<%= deleteChapter %>  id="deleteChapterLink">Delete chapter</a>
-                <% } else { %>
-                    <% let deleteChapter = "comic/delete/"+user.name+"/"+comic[0].comicName+"/"+files[0] %>
-                    <a href=<%= deleteChapter %>  id="deleteChapterLink">Delete chapter</a>
+    <% if (chapters) { %>
+        <div class="m-1 text-center bg-info">
+            <% for( let i = 0; i < chapters.length; i++ ) { %>
+                <a class="fs-3 text-dark" href=<%= `/read/${comic.id}/${chapters[i].chapterNumber}/1`  %> > capitulo <%= chapters[i].chapterNumber %> - <%= chapters[i].chapterTitle %></a>
+                <br>
+                <% if (isUploader) { %>
+                    <a href=<%= `/comic/delete/${user.id}/${comic.id}/${chapters[i].chapterNumber}` %> id="deleteChapterLink">Eliminar capitulo</a>
+                    <br>
                 <% } %>
             <% } %>
-        </h1>
+        </div>
     <% } %>
+
+
 <% } %>
+
+
 
 <script>
 
