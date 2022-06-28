@@ -52,8 +52,30 @@ app.use(async (req,res,next) => {
 
 //Enrutamiento principal
 app.get('/', async (req, res) => {
+    if(req.session.returnTo){
+        req.session.returnTo = ""
+    }
     const users = await models.UserEntry.findAll();
-    res.render('index', {title: 'Main', users: users, user: app.locals.user ,success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
+
+    let newComics = await models.ComicEntry.findAll({
+        order:[
+            ['createdAt','DESC'],
+        ]
+    })
+    for (let comic of newComics) {
+        comic = comic.dataValues
+    }
+
+    let updatedComics = await models.ComicEntry.findAll({
+        order:[
+            ['updatedAt','DESC'],
+        ]
+    })
+    for (let comic of updatedComics) {
+        comic = comic.dataValues
+    }
+
+    res.render('index', {title: 'Pagina Principal', updatedComics:updatedComics, newComics:newComics, users: users, user: app.locals.user ,success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
 })
 app.get('/about',(req, res) => {
     res.render('about',{title: 'Pagina de Informacion', success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
@@ -150,17 +172,14 @@ async (req,res) => {
 })
 app.get('/search',async (req, res) => {
 
-    let user;
-    const comics = await models.ComicEntry.findAll();
+    let user; if (req.user) await req.user.then( e => {user = e[0]} ); console.log(user);
 
-    console.log(JSON.stringify(comics));
-
-    if (await req.user) {
-        req.user.then(e => {
-            user = e[0];
-        })
+    let comics = await models.ComicEntry.findAll();
+    if (comics.length > 0) {
+        for (let comic of comics) {
+            comic = comic.dataValues;
+        }
     }
-
     res.render('comic/search', {title: 'Search Comic', user:user, comics: comics,success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
 })
 app.post('/search', async (req, res) => {

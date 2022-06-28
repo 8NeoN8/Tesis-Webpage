@@ -6,6 +6,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const app = express();
+const models = require('../models/models');
 let user;
 
 
@@ -66,6 +67,41 @@ const uploadChapter = multer({storage:storageChapter,
     }
 }).single('chapterFile');
 
+const storageNewImage = multer.diskStorage({
+    destination:async function(req,response,done){
+
+        let comic = await models.ComicEntry.findByPk(req.params.comicId);
+        let comicName = comic.comicName;
+        let fileFind = undefined;
+
+        let files = fs.readdirSync(`./public/uploads/${comicName}`);
+
+        for (const file of files) {
+            if (path.extname(file) && (path.extname(file) === '.png' || path.extname(file) === '.jpeg' || path.extname(file) === '.jpg') && (file.includes(`${comicName}-CoverImage`))) {
+                fileFind = file;
+            }
+        }
+        if (fileFind) {
+            fs.unlinkSync(`./public/uploads/${comicName}/${fileFind}`);
+        }
+        done(null,'./public/uploads/'+comicName)
+    },
+    filename:async function (req,file,done){
+        let comic = await models.ComicEntry.findByPk(req.params.comicId);
+        let comicName = comic.comicName;
+        let imageName = `${comicName}-CoverImage${path.extname(file.originalname)}`;
+        let newCoverPath = `/uploads/${comicName}/${imageName}`;
+        await models.ComicEntry.update({comicCoverPath: newCoverPath},{
+            where: {
+                id: comic.id
+            }
+        })
+        done(null, imageName)
+    }
+})
+
+const uploadNewImage = multer({storage:storageNewImage}).single('CoverImage');
+
 
 //*Done
 router.get('/create', isLoggedIn, controller.create_get);
@@ -96,13 +132,26 @@ router.post('/upload/:comicUploader/:comicName', isLoggedIn, function(req, res, 
         next()
     })}, controller.upload_post);
 //*Done
-router.get('/delete/:uploaderId/:comicId/', isLoggedIn,controller.delete_comic_get)
+router.post('/delete/:uploaderId/:comicId/', isLoggedIn ,controller.delete_comic_post)
 //*Done
 router.get('/edit/:uploaderId/:comicId/', isLoggedIn, controller.edit_comic_get)
 //*Done
-router.post('/edit/:uploader/:comicId/', isLoggedIn, controller.edit_comic_post)
+router.post('/edit/:uploaderId/:comicId/', isLoggedIn,function(req, res, next){
+    uploadNewImage(req, res, err =>{
+        if (err){
+            console.log(err);
+            req.flash('error','Hubo un problema al subir la nueva imagen');
+            res.redirect('../comic/create')
+            return
+        }
+        next()
+    })}, controller.edit_comic_post)
+//*Done
+router.get('/delete/:uploaderId/:comicId/:chapterId', isLoggedIn,controller.delete_chapter_get)
+//*Done
+router.post('/like/:comicId/:userId',isLoggedIn, controller.likes_post)
 
 //TODO
-//router.get('/delete/:uploader/:comic/:chapter', uploadChapter, isLoggedIn,controller.delete_chapter_get)
+router.post('/deleteComment/:commentId/',isLoggedIn, controller.deleteComment_post)
 
 module.exports = router;

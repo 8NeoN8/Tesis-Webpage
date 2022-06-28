@@ -26,6 +26,48 @@
         <% } %>
     </div>
 
+    <% if (newComics.length>0) { %>
+        <br>
+        <h3 class="bg-primary text-light py-1">Comics Nuevos!</h3>
+        <% for( let i = 0; i < 5; i++ ) { %>
+            <% if (newComics[i]) { %>
+                <div class="comic_block_wrapper bg-secondary p-2">
+                    <div class="bg-dark p-2">
+                        <% console.log('iteration :>> ', i); %>
+                        <% console.log(newComics[i]); %>
+                        <a href=<%= `/read/${newComics[i].dataValues.id}` %>>
+                            <img src="<%= newComics[i].dataValues.comicCoverPath %>" width="100px" height="100px">
+                            <h3>title: <%= newComics[i].dataValues.comicName %></h3>
+                            <h3>Author: <%= newComics[i].dataValues.comicWriter %></h3>
+                            <h3>Status: <%= newComics[i].dataValues.comicStatus %></h3>
+                        </a>
+                    </div>
+                </div>
+            <% } %>
+        <% } %>
+    <% } %>
+
+    <% if (updatedComics.length>0) { %>
+        <br>
+        <h3 class="bg-primary text-light py-1">Comics Recientemente Actualizados!</h3>
+        <% for( let i = 0; i < 5; i++ ) { %>
+            <% if (updatedComics[i]) { %>
+                <div class="comic_block_wrapper bg-secondary p-2">
+                    <div class="bg-dark p-2">
+                        <% console.log('iteration :>> ', i); %>
+                        <% console.log(updatedComics[i]); %>
+                        <a href=<%= `/read/${updatedComics[i].dataValues.id}` %>>
+                            <img src="<%= updatedComics[i].dataValues.comicCoverPath %>" width="100px" height="100px">
+                            <h3>title: <%= updatedComics[i].dataValues.comicName %></h3>
+                            <h3>Author: <%= updatedComics[i].dataValues.comicWriter %></h3>
+                            <h3>Status: <%= updatedComics[i].dataValues.comicStatus %></h3>
+                        </a>
+                    </div>
+                </div>
+            <% } %>
+        <% } %>
+    <% } %>
+
     <%- include ('./partials/footer.ejs') %>
 </body>
 </html>

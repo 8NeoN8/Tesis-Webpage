@@ -11,7 +11,6 @@
 
 <h3 class="bg-danger text-light">AVISO: si las imagenes no estan ordenadas en el formato "pag(numero).(extension)" no sera validad la subida</h3>
 
-
 <form action="/comic/create" method="post" enctype="multipart/form-data" class="p-3 bg-dark text-light">
 
     <div class="form-group m-2">
@@ -20,8 +19,8 @@
     </div>
 
     <div class="form-group m-2">
-        <label for="comicDescription">Descripción</label>
-        <input type="text" name="comicDescription" id="comicDescription" required>
+        <label for="comicDescription">Descripción</label><br>
+        <textarea type="text" name="comicDescription" id="comicDescription" cols="50" rows="4" required></textarea>
     </div>
     <div class="form-group m-2">
         <label for="CoverImage">Imagen de Portada</label>

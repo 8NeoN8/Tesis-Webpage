@@ -1,51 +1,80 @@
 <%- include ('../partials/head.ejs') %>
 <% if (user) { %>
-    <h1>Hello <%= user.name %> </h1>
     <%- include ('../partials/navLogged.ejs') %>
 <% } else { %>
     <%- include ('../partials/navGuest.ejs') %>
 <% } %>
 <h1>PERFIL DEL COMIC</h1>
 <% if (comic) { %>
-    <% let readUrl = `/read/${comic.id}/1/1` %>
-    <h1><a href="<%= readUrl %> ">LEER</a></h1>
-    <h2><%= comic.comicName %> </h2>
-    <h2><%= comic.comicDescription %> </h2>
-    <% console.log(comic.comicCoverPath); %>
-    <img src="<%= comic.comicCoverPath %>" alt="">
-    <div class="text-dark">
-        <h3>Categorias</h3>
-        <% for( let i = 0; i < categories.length; i++ ) { %>
-          <p><%= categories[i] %> </p>
-        <% } %>
-    </div>
-
-    <% if (isUploader) { %>
-        <% console.log("es el que lo subio"); %>
-        <a href=<%= `/comic/edit/${user.id}/${comic.id}` %> id="editComicLink">Editar comic</a>
-        <a href=<%= `/comic/delete/${user.id}/${comic.id}` %> id="deleteComicLink">Eliminar comic</a>
-    <% } %>
-
-    <% if (chapters) { %>
-        <div class="m-1 text-center bg-info">
-            <% for( let i = 0; i < chapters.length; i++ ) { %>
-                <a class="fs-3 text-dark" href=<%= `/read/${comic.id}/${chapters[i].chapterNumber}/1`  %> > capitulo <%= chapters[i].chapterNumber %> - <%= chapters[i].chapterTitle %></a>
-                <br>
-                <% if (isUploader) { %>
-                    <a href=<%= `/comic/delete/${user.id}/${comic.id}/${chapters[i].chapterNumber}` %> id="deleteChapterLink">Eliminar capitulo</a>
-                    <br>
-                <% } %>
+    <div class="bg-secondary p-2">
+        <% let readUrl = `/read/${comic.id}/1/1` %>
+        <h1><a href="<%= readUrl %> ">LEER</a></h1>
+        <h2><%= comic.comicName %> </h2>
+        <h2><%= comic.comicDescription %> </h2>
+        <img src="<%= comic.comicCoverPath %>" alt="">
+        <div class="text-dark">
+            <h3>Categorias</h3>
+            <% for( let i = 0; i < categories.length; i++ ) { %>
+              <p><%= categories[i] %> </p>
             <% } %>
         </div>
-    <% } %>
 
+        <% if (user) { %>
+            <form action=<%= `/comic/like/${comic.id}/${user.id}` %>  method="post">
+                <button class="<% if (hasLiked) { %> btn-secondary <% } else { %> btn-danger <% } %> fs-5 px-2 py-2" type="submit" <% if (hasLiked) { %> disabled <% } %>>
+                    Me gusta! (<%= likes %>)
+                </button>
+            </form>
+        <% } else { %>
+            <h3>Los me gusta solo estan disponibles al iniciar sesion</h3>
+        <% } %>
 
+        <% if (isUploader) { %>
+            <a href=<%= `/comic/edit/${user.id}/${comic.id}` %> id="editComicLink">Editar comic</a>
+            <button id="deleteComic">Eliminar comic</button>
+
+            <form action=<%= `/comic/delete/${user.id}/${comic.id}` %> id="deleteForm" method="post" hidden>
+                <h3>¿De verdad quiere borrar este comic?</h3>
+                <label for="confirmComicDelete">Confirmar con Contraseña:</label><br>
+                <input type="password" name="confirmComicDelete" id="confirmComicDelete">
+                <button type="submit">Eliminar</button>
+            </form>
+
+        <% } %>
+
+        <h2 class="text-center bg-secondary my-2">Capitulos</h2>
+        <% if (chapters.length>0) { %>
+            <div class="m-1 text-center bg-info">
+                <% for( let i = 0; i < chapters.length; i++ ) { %>
+                    <a class="fs-3 text-dark" href=<%= `/read/${comic.id}/${chapters[i].chapterNumber}/1`  %> > capitulo <%= chapters[i].chapterNumber %> - <%= chapters[i].chapterTitle %></a>
+                    <br>
+                    <% if (isUploader) { %>
+                        <a href=<%= `/comic/delete/${user.id}/${comic.id}/${chapters[i].id}` %> id="deleteChapterLink">Eliminar capitulo</a>
+                        <br>
+                    <% } %>
+                <% } %>
+                <% if (isUploader) { %>
+                    <a href=<%= `/comic/upload/${user.id}/${comic.comicName}` %> id="addChapterLink">Agregar capitulo</a>
+                <% } %>
+            </div>
+        <% } else {%>
+            <h3>No hay capitulos actualmente</h3>
+            <br>
+            <% if (isUploader) { %>
+                <a href=<%= `/comic/upload/${user.id}/${comic.comicName}` %> id="addChapterLink">Agregar capitulo</a>
+            <% } %>
+        <% } %>
+    </div>
 <% } %>
 
+<% if (isUploader) { %>
+    <script>
+        let deleteComic = document.getElementById('deleteComic');
+        let deleteForm = document.getElementById('deleteForm');
+        deleteComic.addEventListener('click',()=>{
+            console.log('ola');
+            deleteForm.toggleAttribute('hidden')
+        })
+    </script>
+<% } %>
 
-
-<script>
-
-
-
-</script>

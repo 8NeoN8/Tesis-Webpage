@@ -2,61 +2,64 @@
 <h1>Create comic entry</h1>
 <%- include ('../partials/message.ejs') %>
 <% if (user) { %>
-    <h1>Hello <%= user[0].name %> </h1>
+    <h1>Hello <%= user.username %> </h1>
     <%- include ('../partials/navLogged.ejs') %>
 <% } else { %>
     <%- include ('../partials/navGuest.ejs') %>
 <% } %>
 
-<% let formUrl = "/comic/edit/"+uploader+"/"+comic %>
-<form action=<%= formUrl %>  method="post" class="p-3 bg-dark text-light">
+<form action=<%= `/comic/edit/${uploaderId}/${comicId}` %> enctype="multipart/form-data" method="post" class="p-3 bg-dark text-light">
 
     <div class="form-group m-2">
-        <label for="comicName">Comic Name</label>
+        <label for="comicName">Nombre/Titulo</label>
         <input type="text" name="comicName" id="comicName">
     </div>
 
     <div class="form-group m-2">
-        <label for="comicDescription">Comic Description</label>
-        <input type="text" name="comicDescription" id="comicDescription">
+        <label for="comicDescription">Descripción</label><br>
+        <textarea type="text" name="comicDescription" id="comicDescription" cols="50" rows="4"></textarea>
     </div>
     <div class="form-group m-2">
-        <label for="comicStart">Start Date</label>
+        <label for="CoverImage">Imagen de Portada</label>
+        <input type="file" name="CoverImage" id="CoverImage" accept="image/*">
+    </div>
+    <div class="form-group m-2">
+        <label for="comicStart">Fecha de Inicio</label>
         <input type="date" name="comicStart" id="comicStart">
     </div>
     <div class="form-group m-2">
-        <label for="comicSchedule">Publication schedule</label>
+        <label for="comicSchedule">Frecuencia de Publicación</label>
         <select  name="comicSchedule" id="comicSchedule">
-            <option value="finished">Finished</option>
-            <option value="weekly">Weekly</option>
-            <option value="biweekly">biWeekly</option>
-            <option value="triweekly">triWeekly</option>
-            <option value="monthly">monthly</option>
-            <option value="bimonthly">bimonthly</option>
-            <option value="trimonthly">trimonthly</option>
+            <option value="Terminado">Terminado</option>
+            <option value="Semanal">Semanal</option>
+            <option value="Bisemanal">Bisemanal</option>
+            <option value="Trisemanal">Trisemanal</option>
+            <option value="Mensual">Mensual</option>
+            <option value="BiMensual">BiMensual</option>
+            <option value="TriMensual">TriMensual</option>
         </select>
     </div>
     <div class="form-group m-2">
-        <label for="comicStatus">Publication Status</label>
+        <label for="comicStatus">Estado de publicacion</label>
         <select name="comicStatus" id="comicStatus">
-            <option value="Ongoing">Ongoing</option>
+            <option value="En-emision">En emision</option>
             <option value="Hiatus">Hiatus</option>
-            <option value="Finished">Finished</option>
-            <option value="Abandoned">Abandoned</option>
+            <option value="Terminado">Terminado</option>
+            <option value="Abandonado">Abandonado</option>
         </select>
     </div>
     <div class="form-group m-2">
-        <label for="isWriter">Is the user the comic writer?</label>
-        <input type="checkbox" name="isWriter" id="isWriter">
+        <label for="isWriter">El usuario es el autor del comic?</label>
+        <input type="checkbox" name="isWriter" id="isWriter" checked>
     </div>
     <div class="form-group m-2">
-        <label for="comicOgWriter">original Writer</label>
-        <input type="text" name="comicOgWriter" id="comicOgWriter" disabled>
+        <label for="comicWriter">Autor Original</label>
+        <input type="text" name="comicWriter" id="comicWriter" disabled>
     </div>
 
     <div class="form-group m-2">
-        <label for="selectedCats">Selected Categories</label>
-        <input type="text" name="selectedCats" id="selectedCats" disabled>
+        <label for="selectedCats">Categorias Seleccionadas</label>
+        <input type="text" name="selectedCats" id="selectedCats">
     </div>
 
     <div id="categories-block"></div>

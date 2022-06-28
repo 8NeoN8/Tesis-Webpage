@@ -51,7 +51,7 @@ const storageSetting = multer.diskStorage({
         let user = await models.UserEntry.findByPk(user_id);
         user = user.dataValues;
         let pfpName = `user-${user_id}-pfp${path.extname(file.originalname)}`;
-        let pfpPath = `/public/uploads/users/${user.username}/${pfpName}`;
+        let pfpPath = `/uploads/users/${user.username}/${pfpName}`;
         await models.UserEntry.update({profilePicPath: pfpPath},{
             where: {
                 id: user_id
@@ -64,9 +64,9 @@ const storageSetting = multer.diskStorage({
 const uploadSettingsPfp = multer({storage:storageSetting}).single('userPfp');
 
 
-//TODO
+//*Done
 router.get('/settings/:id', isLoggedIn, controller.settings_get);
-//TODO
+//*Done
 router.post('/settings/:id', isLoggedIn, function(req, res, next){
     uploadSettingsPfp(req, res, err =>{
         if (err){
@@ -79,7 +79,12 @@ router.post('/settings/:id', isLoggedIn, function(req, res, next){
 //*Done
 router.get('/deleteUser/:id', controller.deleteUser);
 
-const pool = require('../database.js')
+//TODO
+router.get('/profile/:userId',controller.userProfile_get);
+//TODO
+router.post('/profile/:userId',controller.userProfile_post);
+//TODO
+router.get('/delete/social/:userId/:socialId',controller.deleteNetwork)
 
 function deleteFolderRecursive(path) {
     if( fs.existsSync(path) ) {
@@ -94,33 +99,26 @@ function deleteFolderRecursive(path) {
         fs.rmdirSync(path);
       }
       console.log('borrado');
-  };
+};
 
 module.exports = router;
 
 /*
+!hacer main page shit
+!sistema de notifs de seguidos
+!acomodar el read(nuevo modo de mostrar las imagenes y poner las configuraciones/controles)
+
+
 
 !hacer admin pages
 
-!hacer main page shit
-
 !hacer reportes(solo los admins)
 
-!sistema de likes o seguimientos(para usuarios)
-
-!reporte de contenido (de los usuarios para los admins)
-
-!acomodar el read(nuevo modo de mostrar las imagenes y poner las configuraciones/controles)
-
-!acomodar el delete y edit de (comics delete/edit, usuarios delete)
-
-!agregar eliminar comentario(user y admin)
-
-!agregar respuestas para comentarios
-
-!agregar input de social network
-
 !agregar sugerencias de usuarios para admins
+
+!sistema de mensaje global de admins
+
+
 
 TODO arreglar imagen de bdd
 

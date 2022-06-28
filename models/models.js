@@ -93,27 +93,6 @@ models.ComicEntry = sequelize.define('comic',{
     },
 })
 
-models.CategoriesEntry = sequelize.define('category',{
-    id:{
-        type: DataTypes.INTEGER(20),
-        allowNull: false,
-        primaryKey: true,
-        autoIncrement: true,
-    },
-    comic_id:{
-        type: DataTypes.INTEGER(11),
-        references:{
-            model:models.ComicEntry,
-            key:'id'
-        },
-        allowNull: false
-    },
-    categoriesList:{
-        type: DataTypes.STRING(255),
-        allowNull: false
-    }
-})
-
 models.ChapterEntry = sequelize.define('chapter',{
     id:{
         type: DataTypes.INTEGER(20),
@@ -176,7 +155,7 @@ models.CommentEntry = sequelize.define('comment',{
     }
 })
 
-models.SocialEntry = sequelize.define('socilaNetwork',{
+models.SocialEntry = sequelize.define('socialnetwork',{
     id:{
         type: DataTypes.INTEGER(20),
         allowNull: false,
@@ -224,6 +203,31 @@ models.SettingsEntry = sequelize.define('setting',{
         type: DataTypes.STRING(255),
         allowNull:false
     }
+})
+
+models.likeEntry = sequelize.define('like',{
+    id:{
+        type: DataTypes.INTEGER(20),
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true,
+    },
+    user_id:{
+        type: DataTypes.INTEGER(11),
+        references:{
+            model:models.UserEntry,
+            key:'id'
+        },
+        allowNull: false
+    },
+    comic_id:{
+        type: DataTypes.INTEGER(20),
+        references:{
+            model:models.ComicEntry,
+            key:'id'
+        },
+        allowNull: false
+    },
 })
 
 /*

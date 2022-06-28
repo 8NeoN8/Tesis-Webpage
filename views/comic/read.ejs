@@ -1,4 +1,5 @@
 <%- include ('../partials/head.ejs') %>
+<%- include ('../partials/message.ejs') %>
 <% if (user) { %>
     <h1>Hola <%= user.name %> </h1>
     <%- include ('../partials/navLogged.ejs') %>
@@ -44,12 +45,17 @@
             <div class="my-2 p-2 bg-dark text-light w-50">
                 <h5><%= comments[i].username %> </h5>
                 <p><%= comments[i].commentText %> </p>
-                <br>
+                <div class="comment-options d-flex">
+                    <% if (user && (comments[i].user_id === user.id)) { %>
+                        <form action=<%= `/comic/deleteComment/${comments[i].id}`%>  method="post">
+                            <button class="p-1" type="submit">Eliminar comentario</button>
+                        </form>
+                    <% } %>
+                </div>
             </div>
         <% } %>
     <% } %>
 
 </section>
-
 
 <%- include ('../partials/footer.ejs') %>

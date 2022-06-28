@@ -25,8 +25,12 @@
           <li class="nav-item">
             <a class="nav-link text-light" href="/logout">Cerrar sesion</a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link text-light" href=<%= `/user/settings/${user.id}` %> ><%=  user.username%></a>
+          <li class="nav-item d-flex">
+            <a class="nav-link text-light" href=<%= `/user/profile/${user.id}` %>>
+              <%= user.username %>
+              <img src=<%= user.profilePicPath %> width="50px" height="50px" style="border-radius: 50%;">
+            </a>
+
           </li>
         </ul>
 

@@ -3,9 +3,19 @@ const pool = require('../database');
 const models = require('../models/models');
 const helpers = require('../lib/helpers')
 const bcrypt = require('bcrypt');
+const fs = require('fs');
+const path = require('path');
 
 const settings_get = async (req, res) => {
     let user; await req.user.then(e => {user = e[0].dataValues;})
+
+    let userId = req.params.id
+
+    if (user.id !== parseInt(userId)) {
+        req.flash('error','Usuario no permitido para editar');
+        res.redirect('back');
+        return
+    }
 
     const title = `Configuracion ${user.username}`
 
@@ -15,7 +25,13 @@ const settings_get = async (req, res) => {
 const settings_post = async (req, res) => {
     let user; await req.user.then(e => {user = e[0].dataValues;})
 
-    //let settings = await models.SettingsEntry
+    let userId = req.params.id;
+
+    if (user.id !== parseInt(userId)) {
+        req.flash('error','Usuario no permitido para editar');
+        res.redirect('back');
+        return
+    }
 
     let userentry = await models.UserEntry.findByPk(req.params.id)
 
@@ -111,6 +127,33 @@ const settings_post = async (req, res) => {
                 id: req.params.id
             }
         })
+
+        let dirPath = path.join(__dirname,'..','/public/uploads/users/',userentry.username)
+        console.log(dirPath);
+        if(fs.existsSync(dirPath)){
+            console.log('existe');
+        }else{
+            console.log('no existe wtf?');
+        }
+
+        if(fs.existsSync(`./public/uploads/users/${userentry.username}`)){
+            fs.renameSync(path.join(__dirname,'..','/public/uploads/users',userentry.username),path.join(__dirname,'..','/public/uploads/users',req.body.username));
+            let pfpName;
+            let pfpPath;
+            let files = fs.readdirSync(`./public/uploads/users/${req.body.username}`)
+            for (const file of files) {
+                if (path.extname(file)) {
+                    pfpName = `user-${userentry.id}-pfp${path.extname(file)}`;
+                }
+            }
+
+            pfpPath = `/uploads/users/${req.body.username}/${pfpName}`;
+            await models.UserEntry.update({profilePicPath: pfpPath},{
+                where: {
+                    id: userentry.id
+                }
+            })
+        }
     }
 
     if (req.body.email) {
@@ -213,9 +256,170 @@ const deleteUser = async (req, res) => {
     res.redirect('back');
 }
 
+const userProfile_get = async (req, res) => {
+
+    let user;
+    let isUploader = false;
+    let userId = parseInt(req.params.userId);
+    if (req.user) {
+        await req.user.then( e => {user = e[0]});
+        if (user.id === userId) {
+            isUploader = true;
+        }
+    }
+
+    let userEntry = await models.UserEntry.findByPk(userId);
+
+    if (!userEntry) {
+        req.flash('error','El usuario no existe');
+        res.redirect('back');
+        return;
+    }
+
+    userEntry = userEntry.dataValues;
+
+    let networks = await models.SocialEntry.findAll({
+        where: {
+            user_id: userEntry.id,
+        }
+    });
+
+    let comics = await models.ComicEntry.findAll({
+        where: {
+            comicUploader_id: userEntry.id
+        }
+    })
+
+    if (comics.length > 0) {
+        for (let i = 0; i < comics.length-1; i++) {
+            comics[i] = comics[i].dataValues;
+        }
+    }
+
+    let title = `Perfil de ${userEntry.username}`
+
+    res.render('user/userProfile',{title:title, user:user, profileUser:userEntry, isUploader:isUploader, networks:networks, comics:comics,  success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
+
+}
+
+const userProfile_post = async (req, res) => {
+    let user; if (req.user) await req.user.then(e => {user = e[0].dataValues;})
+
+    let userId = parseInt(req.params.userId);
+
+    console.log('socialSel :>> ', req.body.socialSel);
+    console.log('socialLink :>> ', req.body.socialLink);
+
+    let socialSel = req.body.socialSel
+    let socialLink = req.body.socialLink
+
+
+    if (user.id !== userId) {
+        req.flash('error','Usuario no permitido para editar');
+        res.redirect('back');
+        return
+    }
+
+    let newSocial;
+
+    let checkL = `https://www.${socialSel}`
+    console.log('checkL :>> ', checkL);
+
+    if(socialSel.includes(checkL)){
+        console.log('tabien');
+    }
+    try {
+        switch (socialSel) {
+            case "twitter":
+                if (!socialLink.includes(`https://${socialSel}.com`)) {
+                    req.flash('error','El link no es valido para esta red social');
+                    console.log('putasea');
+                    res.redirect('back');
+                    return;
+                }
+                newSocial = await models.SocialEntry.create({user_id:userId, networkName:req.body.socialSel, networkLink:socialLink})
+                break;
+
+            case "facebook":
+                if (!socialLink.includes(`https://www.${socialSel}.com`)) {
+                    req.flash('error','El link no es valido para esta red social');
+                    res.redirect('back');
+                    return;
+                }
+                newSocial = await models.SocialEntry.create({user_id:userId, networkName:req.body.socialSel, networkLink:socialLink})
+                break;
+
+            case "pinterest":
+                if (!socialLink.includes(`https://www.${socialSel}`)) {
+                    req.flash('error','El link no es valido para esta red social');
+                    res.redirect('back');
+                    return;
+                }
+                newSocial = await models.SocialEntry.create({user_id:userId, networkName:req.body.socialSel, networkLink:socialLink})
+                break;
+
+            case "pixiv":
+                if (!socialLink.includes(`https://www.${socialSel}.net`)) {
+                    req.flash('error','El link no es valido para esta red social');
+                    res.redirect('back');
+                    return;
+                }
+                newSocial = await models.SocialEntry.create({user_id:userId, networkName:req.body.socialSel, networkLink:socialLink})
+                break;
+            case "instagram":
+                if (!socialLink.includes(`https://www.${socialSel}.com`)) {
+                    req.flash('error','El link no es valido para esta red social');
+                    res.redirect('back');
+                    return;
+                }
+                newSocial = await models.SocialEntry.create({user_id:userId, networkName:req.body.socialSel, networkLink:socialLink})
+                break;
+
+            default:
+                req.flash('error','No se eligio una red social valida');
+                res.redirect('back');
+                break;
+        }
+        req.flash('success','Red social Agregada')
+         res.redirect('back');
+    } catch (error) {
+        req.flash('error','Hubo un problemas inesperado, intentelo de nuevo');
+        res.redirect('back');
+    }
+
+
+}
+
+const deleteNetwork = async (req, res) => {
+    let user; await req.user.then(e => {user = e[0].dataValues;})
+
+    let userId = parseInt(req.params.userId);
+    let socialId = parseInt(req.params.socialId);
+    console.log('userId :>> ', userId);
+    console.log('socialId :>> ', socialId);
+
+    if (user.id !== userId) {
+        req.flash('error','Usuario no permitido para editar');
+        res.redirect('back');
+        return
+    }
+
+    await models.SocialEntry.destroy({
+        where: {
+            user_id: userId,
+            id: socialId
+        }
+    })
+
+    req.flash('success','Red social eliminada')
+    res.redirect('back');
+}
 
 module.exports ={
     settings_get,
     settings_post,
     deleteUser,
+    userProfile_get,
+    userProfile_post,
+    deleteNetwork,
 }

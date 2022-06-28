@@ -4,6 +4,8 @@ const pool = require('../database');
 const StreamZip = require('node-stream-zip');
 const { use } = require('passport');
 const models = require('../models/models');
+const { nextTick } = require('process');
+const helpers = require('../lib/helpers')
 
 const create_get = async (req, res) => {
     res.render('comic/create', {title: 'Create Comic Entry', success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
@@ -282,6 +284,7 @@ const profile_get = async (req,res) => {
         await req.user.then(e => {
             user = e[0];
         })
+        user = user.dataValues
     }
 
     const comicEntry = await models.ComicEntry.findOne({
@@ -294,34 +297,55 @@ const profile_get = async (req,res) => {
 
 
     if (user) {
-        if (user.dataValues.id === comic.comicUploader_id) {
+        if (user.id === comic.comicUploader_id) {
             uploader = true
         }
     }
 
-    const chapterArr = await models.ChapterEntry.findAll({
+    let chapters = await models.ChapterEntry.findAll({
         where:{
             comic_id: comic.id
         }
     })
 
-    let chapters = []
 
-    for (const chapter of chapterArr) {
-        chapters.push(chapter.dataValues);
+    for (let chapter of chapters) {
+        chapter = chapter.dataValues;
     }
 
     let categories = comic.comicCategories.split(',');
-    categories.shift()
+    categories.shift();
 
-    res.render('./comic/profile',{ isUploader: uploader, comic:comic, categories: categories, chapters:chapters ,title: comic.comicName, user:user, success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
+    let hasLiked = false;
+
+    let userLike;
+    if (user) {
+        userLike = await models.likeEntry.findOne({
+            where: {
+                user_id: user.id,
+                comic_id: comicId
+            }
+        })
+        if(userLike){
+            hasLiked = true
+        }
+    }
+
+    console.log('hasLiked :>> ', hasLiked);
+
+    const likes = await models.likeEntry.count({
+        where: {
+            comic_id: comicId
+        }
+    })
+
+    res.render('./comic/profile',{ hasLiked:hasLiked, likes:likes, isUploader: uploader, comic:comic, categories: categories, chapters:chapters ,title: comic.comicName, user:user, success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
 }
 
 const read_get = async (req, res) =>{
 
     let user; if (req.user) await req.user.then( e => {user = e[0]} );
     const params = req.params;
-    console.log(params);
 
     let Comic = await models.ComicEntry.findAll({
         where:{
@@ -329,25 +353,20 @@ const read_get = async (req, res) =>{
         }
     })
     Comic = Comic[0].dataValues
-    console.log('el comic: >>',Comic);
 
-    let chapters = await models.ChapterEntry.findAll({
+    let chapter = await models.ChapterEntry.findOne({
         where: {
             comic_id: params.comicId,
             chapterNumber: params.chapter
         }
     })
-    chapters = chapters[0].dataValues;
-    console.log('chapters:>> ',chapters);
+    chapter = chapter.dataValues;
 
     const dirPath = "./public/uploads/"+Comic.comicName+"/capitulo-"+params.chapter;
-    console.log('dirPath :>> ', dirPath);
 
     const files = fs.readdirSync(dirPath);
-    console.log('files :>> ', files);
 
     const amountPages = files.length;
-    console.log('Amount of pages :>> ', amountPages);
 
     const title = 'Leer '+Comic.comicName+' - '+params.chapter;
 
@@ -377,7 +396,7 @@ const read_get = async (req, res) =>{
     let comments = await models.CommentEntry.findAll({
         where:{
             comic_id: Comic.id,
-            chapter_id: chapters.id
+            chapter_id: chapter.id
         }
     })
 
@@ -387,13 +406,9 @@ const read_get = async (req, res) =>{
         comments[i].username = user.username;
     }
 
-    console.log('commentarios: >>',comments);
-
     const Url =  req.originalUrl;
 
-    console.log(Url);
-
-    res.render('comic/read',{title: title, user:user, comic:Comic, chapters:chapters, chapterPath:chapterPath, files:files, amountPages:amountPages, currentPage:currentPage, prevPage:prevPage, nextPage:nextPage, currentLink:currentLink, comments:comments, Url:Url})
+    res.render('comic/read',{title: title, user:user, comic:Comic, chapter:chapter, chapterPath:chapterPath, files:files, amountPages:amountPages, currentPage:currentPage, prevPage:prevPage, nextPage:nextPage, currentLink:currentLink, comments:comments, Url:Url})
 }
 
 const read_post = async (req, res) =>{
@@ -427,139 +442,284 @@ const read_post = async (req, res) =>{
 
 const edit_comic_get = async (req, res) => {
 
-    let comic = req.params.comic
-    let uploader = req.params.uploader
-    let tmp = await req.user
-    let user = tmp[0]
+    let uploader = req.params.uploaderId;
+    let user = await req.user;
+    user = user[0].dataValues;
 
-    if (user.name !== uploader) {
+    console.log(uploader);
+
+    console.log(user.id);
+
+    if (user.id !== parseInt(uploader)) {
         req.flash('error','Error. User not allowed to edit');
-        res.redirect('/index');
+        res.redirect('/');
         return;
     }
 
-    if (user.name == uploader) {
-        res.render('comic/editComic', {title: 'Edit Comic Entry',uploader:uploader,comic:comic, success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
+    if (user.id === parseInt(uploader)) {
+        res.render('comic/editComic', {title: 'Edit Comic Entry', user:user, uploaderId:req.params.uploaderId,comicId:req.params.comicId, success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
     }
 }
 
 const edit_comic_post = async (req, res) =>{
 
-    let comicName = req.params.comic
-    let user;
-    let writer;
-    let genresObj = [];
-    let chapters = {};
-    let comic = {};
+    let comicId = req.params.comicId;
+    let uploaderId = req.params.uploaderId;
+    console.log('params :>> ', req.params);
+    let user; await req.user.then( e => { user = e[0] }); user = user.dataValues
 
-
-    await req.user.then(e => {
-        user = e[0];
+    let oldComicData = await models.ComicEntry.findOne({
+        where:{
+            id: comicId,
+            comicUploader_id: uploaderId
+        }
     })
+    oldComicData = oldComicData.dataValues;
 
     if (req.body.comicName){
         let comicName = req.body.comicName;
-        comic.comicName = comicName
-        genresObj.genresComic = comicName
-        chapters.chaptersComic = comicName
-        console.log(comic.comicName);
+        if (comicName.includes(" ")) {
+            comicName = req.body.comicName.replace(" ","-");
+        }
+
+        let oldPath = path.join(__dirname,'..','/public/uploads/',oldComicData.comicName)
+        let newPath = path.join(__dirname,'..','/public/uploads/',comicName)
+
+        try {
+            if (fs.existsSync(newPath)) {
+                req.flash('error','Ese Comic ya existe');
+                res.redirect('back');
+                return;
+            }
+
+            fs.mkdirSync(newPath);
+
+            let moveChapters = fs.readdirSync(oldPath);
+
+            moveChapters.forEach(chapterFolder => {
+                try {
+                    fs.renameSync(path.join(__dirname,'..','/public/uploads/',oldComicData.comicName,chapterFolder),path.join(__dirname,'..','/public/uploads/',comicName,chapterFolder))
+                } catch (err) {
+                    console.log(err);
+                    req.flash('error','Hubo un problema al cambiar de directorio');
+                    res.redirect('back');
+                    return;
+                }
+            });
+            try {
+                fs.rmdirSync(oldPath)
+            } catch (error) {
+                console.log(err);
+                req.flash('error','Hubo un problema al borrar el viejo directorio');
+                res.redirect('back');
+                return;
+            }
+        } catch (error) {
+            req.flash('error','Hubo un problema inesperado');
+            console.log('error :>> ', error);
+            res.redirect('back');
+        }
+
+        let coverImage
+        let searchCover = fs.readdirSync(newPath)
+        searchCover.forEach(file => {
+            if(!path.extname(file)) {
+                console.log(file,"no extension");
+            }
+            coverImage = file;
+
+        });
+        console.log('coverImage :>> ', coverImage);
+        let newCoverImage = `${comicName}-CoverImage${path.extname(coverImage)}`
+
+        fs.renameSync(path.join(__dirname,'..','/public/uploads/',comicName,coverImage), path.join(__dirname,'..','/public/uploads/',comicName,newCoverImage))
+
+        let newCoverPath = `/uploads/${comicName}/${newCoverImage}`;
+
+        await models.ComicEntry.update({comicCoverPath: newCoverPath,comicName:comicName},{
+            where: {
+                id: comicId,
+                comicUploader_id: uploaderId
+            }
+        })
+
     }
+
     if (req.body.comicDescription){
-        let comicDescription = req.body.comicDescription;
-        comic.comicDescription = comicDescription
-        console.log(comic.comicDescription);
+        await models.ComicEntry.update({comicDescription: req.body.comicDescription},{
+            where: {
+                id: comicId,
+                comicUploader_id: uploaderId
+            }
+        })
     }
     if (req.body.comicSchedule){
-        let comicSchedule = req.body.comicSchedule;
-        comic.comicSchedule = comicSchedule
-        console.log(comic.comicSchedule);
+        await models.ComicEntry.update({comicSchedule: req.body.comicSchedule},{
+            where: {
+                id: comicId,
+                comicUploader_id: uploaderId
+            }
+        })
     }
     if (req.body.comicStart){
-        let comicStart = req.body.comicStart;
-        comic.comicStart = comicStart
-        console.log(comic.comicStart);
+        await models.ComicEntry.update({comicStart: req.body.comicStart},{
+            where: {
+                id: comicId,
+                comicUploader_id: uploaderId
+            }
+        })
     }
     if (req.body.comicStatus){
-        let comicStatus = req.body.comicStatus;
-        comic.comicStatus = comicStatus
-        console.log(comic.comicStatus);
+        await models.ComicEntry.update({comicStatus: req.body.comicStatus},{
+            where: {
+                id: comicId,
+                comicUploader_id: uploaderId
+            }
+        })
     }
 
-    if (req.body.comicOgWriter) {
-        comic.comicWriter = req.body.comicOgWriter;
-        console.log(writer);
+    if (req.body.comicWriter) {
+        await models.ComicEntry.update({comicWriter: req.body.comicWriter},{
+            where: {
+                id: comicId,
+                comicUploader_id: uploaderId
+            }
+        })
     }
 
-    console.log(comic);
 
     if(req.body.selectedCats){
-        genresObj.genresNames = req.body.selectedCats;
+        await models.ComicEntry.update({selectedCats: req.body.selectedCats},{
+            where: {
+                id: comicId,
+                comicUploader_id: uploaderId
+            }
+        })
     }
-
-    console.log(genresObj);
-
-    pool.query('USE tesis');
-    pool.query('UPDATE comics SET ? WHERE comicName = ?',[comic, comicName]);
-    pool.query('USE tesis');
-    pool.query('UPDATE genres SET ? WHERE genresComic = ?',[genresObj,comicName]);
-    pool.query('USE tesis');
-    pool.query('UPDATE chapters SET ? WHERE chapterComic = ?',[chapters,comicName]);
-    res.redirect('/comic/profile/'+comic.comicName);
+    res.redirect(`/read/${oldComicData.id}`);
 
 }
 
-const delete_comic_get = async (req, res) => {
+const delete_comic_post = async (req, res) => {
 
-    let comic = req.params.comic
-    let uploader = req.params.uploader
-    let tmp = await req.user
-    let user = tmp[0]
+    let comicId = req.params.comicId
+    let uploaderId = req.params.uploaderId
+    let user = await req.user
+    user = user[0].dataValues
 
-    if (user.name !== uploader) {
-        req.flash('error','Error. User not allowed to delete');
-        res.redirect('/index');
+    console.log('params :>> ', req.params);
+
+    let uploaderData = await models.UserEntry.findOne({
+        where: {
+            id: uploaderId
+        }
+    })
+    let comicData = await models.ComicEntry.findOne({
+        where: {
+            id: comicId
+        }
+    })
+
+    if (user.id !== uploaderData.id) {
+        console.log('no es  uploader');
+        req.flash('error','Parece que no esta autorizado para borrar este comic, como llegaste hasta aqui?');
+        res.redirect('/');
         return;
     }
 
-    if (user.name === uploader) {
-
-        if (comic.includes("-")) {
-            comic = comic.replaceAll("-"," ")
-        }
-
-        pool.query('USE tesis');
-        let theComic = await pool.query('SELECT * FROM comics WHERE comicName = ?',[comic]);
-
-        let delPath = await '/public/uploads/'+uploader+'/'+theComic[0].comicOgWriter
-        try {
-            fs.unlinkSync(delPath);
-        } catch (err) {
-            console.log(err);
-        }
-
-        pool.query('USE tesis')<
-        pool.query('DELETE FROM comics WHERE comicName = ?',[comic])
-        pool.query('USE tesis')<
-        pool.query('DELETE FROM chapters WHERE chapterComic = ?',[comic])
-        pool.query('USE tesis')<
-        pool.query('DELETE FROM comics WHERE genresComic = ?',[comic])
-
-        req.flash('success','Comic deleted');
-        res.redirect('../');
+    if(!req.body.confirmComicDelete){
+        console.log(req.body.confirmComicDelete," 2");
+        console.log('no confirm');
+        req.flash('error','Debe confirmar con su contraseña para borrar comics');
+        res.redirect('back');
+        return;
     }
 
+    if (!helpers.matchPassword(req.body.confirmComicDelete, uploaderData.password)) {
+        console.log('incorrecta');
+        req.flash('error','Contraseña incorrecta');
+        res.redirect('back');
+        return;
+    }
 
+    try {
+        await models.ComicEntry.destroy({
+            where: {
+                id: comicId,
+                comicUploader_id: uploaderId
+            }
+        })
 
+        await models.ChapterEntry.destroy({
+            where: {
+                comic_id: comicId,
+            }
+        })
+
+        await models.CommentEntry.destroy({
+            where: {
+                comic_id: comicId,
+            }
+        })
+    } catch (err) {
+        console.log(err);
+        req.flash('error','No se pudo borrar correctamente de la bdd');
+        res.redirect('back');
+        return;
+    }
+
+    deleteFolderRecursive(`./public/uploads/${comicData.comicName}`)
+
+    req.flash('success','Comic borrado sin problemas');
+    res.redirect('/');
 }
 
 const delete_chapter_get = async (req, res) => {
 
-    let comic = req.params.comic
-    let uploader = req.params.uploader
-    let chap = req.params.chapter
-    let tmp = await req.user
-    let user = tmp[0]
+    let comicId = req.params.comicId;
+    let uploaderId = req.params.uploaderId;
+    let chapId = req.params.chapterId;
+    let user = await req.user;
+    user = user[0].dataValues;
 
+    let uploaderData = await models.UserEntry.findByPk(uploaderId);
+
+    if (user.id !== uploaderData.id) {
+        req.flash('error','Parece que no esta autorizado para borrar este capitulo, como llegaste hasta aqui?');
+        res.redirect('/');
+        return;
+    }
+
+    let comicData = await models.ComicEntry.findByPk(comicId);
+
+    let chapterData = await models.ComicEntry.findByPk(chapId);
+
+    try {
+        await models.ChapterEntry.destroy({
+            where: {
+                id: chapId,
+                comic_id: comicId
+            }
+        })
+
+        await models.CommentEntry.destroy({
+            where: {
+                chapter_id: chapId,
+                comic_id: comicId
+            }
+        })
+    } catch (err) {
+        console.log(err);
+        req.flash('error','No se pudo borrar correctamente de la bdd');
+        res.redirect('back');
+        return;
+    }
+
+    deleteFolderRecursive(`./uploads${comicData.comicName}/capitulo-${chapterData.chapterNumber}`);
+
+    req.flash('success','El capitulo fue removido');
+    res.redirect('back');
+    return
     console.log(req.params);
 
     if (comic.includes("-")) {
@@ -600,11 +760,61 @@ const delete_chapter_get = async (req, res) => {
 
 }
 
-const comments = async (req, res) => {
-    var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+const likes_post = async (req, res) => {
+    let user; if(req.user){
+        await req.user.then(e => {user = e[0]});
+        user = user.dataValues;
+    }
+    let comicId = req.params.comicId;
 
-    console.log(fullUrl);
+    let newLike = await models.likeEntry.create({user_id: user.id, comic_id: comicId});
+
+    res.redirect('back');
 }
+
+const deleteComment_post = async (req, res) => {
+    let user; if(req.user){
+        await req.user.then(e => {user = e[0]});
+        user = user.dataValues;
+    }
+
+    let commentId = req.params.commentId;
+
+    let comment = await models.CommentEntry.findByPk(commentId);
+
+    console.log(comment.dataValues);
+
+    if (user.id !== comment.dataValues.user_id) {
+        req.flash('error','Usuario no permitido para editar')
+        res.redirect('back')
+    }
+
+}
+
+function deleteFolderRecursive(path) {
+    try {
+        if(fs.existsSync(path) ) {
+            console.log('existe');
+            fs.readdirSync(path).forEach(function(file) {
+                var curPath = path + "/" + file;
+                if(fs.lstatSync(curPath).isDirectory()) { // recurse
+                    deleteFolderRecursive(curPath);
+                } else { // delete file
+                    fs.unlinkSync(curPath);
+                }
+            });
+            fs.rmdirSync(path);
+            console.log('borrado');
+        }else console.log('noexiste?');
+    } catch (err) {
+        console.log(err);
+        req.flash('error','Hubo un problema borrando el directorio, intentelo de nuevo');
+        res.redirect('back');
+        return;
+    }
+
+};
+
 
 module.exports = {
     create_get,
@@ -616,7 +826,8 @@ module.exports = {
     read_post,
     edit_comic_get,
     edit_comic_post,
-    delete_comic_get,
+    delete_comic_post,
     delete_chapter_get,
-
+    likes_post,
+    deleteComment_post,
 }

@@ -12,19 +12,14 @@
 <% if (comics.length > 0) { %>
     <% for( let i = 0; i < comics.length; i++ ) { %>
         <div class="comic_block_wrapper bg-secondary p-2">
-            <% let profileUrl = "/read/" + comics[i].dataValues.id%>
-            <% let imgSrc = "/uploads/"+comics[i].comicOgWriter +"/"+ comics[i].comicOgName +"/CoverImage-"+ comics[i].comicOgName +"."+(comics[i].comicCoverPath.split(".").pop()) %>
             <div class="bg-dark p-2">
-
-                <a href="<%= profileUrl %> ">
-                    <img src="<%= comics[i].dataValues.comicCoverPath %>" width="100px" height="100px">
+                <a href=<%= `/read/${comics[i].id}` %>>
+                    <img src="<%= comics[i].comicCoverPath %>" width="100px" height="100px">
                     <h3>title: <%= comics[i].comicName %></h3>
                     <h3>Author: <%= comics[i].comicWriter %></h3>
                     <h3>Status: <%= comics[i].comicStatus %></h3>
                 </a>
-
             </div>
-
         </div>
     <% } %>
 <% } %>

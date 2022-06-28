@@ -1,0 +1,80 @@
+<%- include ('../partials/head.ejs') %>
+<%- include ('../partials/message.ejs') %>
+<% if (user) { %>
+    <h1>Hello <%= user.name %> </h1>
+    <%- include ('../partials/navLogged.ejs') %>
+<% } else { %>
+    <%- include ('../partials/navGuest.ejs') %>
+<% } %>
+
+<% if (profileUser) { %>
+    <h1><%= profileUser.username %> </h1>
+    <img src=<%= profileUser.profilePicPath %>  alt="">
+    <br>
+<% } %>
+
+<% if (isUploader) { %>
+    <button class="btn-primary" id="addSocial">Agregar Red social</button>
+    <form action=<%= `/user/profile/${profileUser.id}` %>  method="post" id="socialForm" hidden>
+        <label for="socialSel">Eliga la red social a añadir</label>
+        <select name="socialSel" id="socialSel">
+            <option selected></option>
+            <option value="twitter">Twitter</option>
+            <option value="facebook">Facebook</option>
+            <option value="pinterest">Pinterest</option>
+            <option value="pixiv">Pixiv</option>
+            <option value="instagram">Instagram</option>
+        </select>
+        <label for="socialLink">Link de su Perfil</label>
+        <input type="text" name="socialLink">
+        <button type="submit">agregar</button>
+    </form>
+<% } %>
+
+<% if (networks.length > 0) { %>
+    <% if (!isUploader) { %>
+        <h2>Chequea sus redes sociales tambien!</h2>
+    <% } %>
+    <% for( let i = 0; i < networks.length; i++ ) { %>
+        <h3> <%= networks[i].networkName %> </h3>
+        <a href=<%= networks[i].networkLink %> target="_blank">Perfil</a>
+        <% if (isUploader) { %>
+            <a href=<%= `/user/delete/social/${networks[i].user_id}/${networks[i].id}` %>">Eliminar</a>
+        <% } %>
+    <% } %>
+<% } %>
+
+<% if (comics.length > 0) { %>
+    <% if (!isUploader) { %>
+        <h2>Mira los comics que ha compartido!</h2>
+    <% } %>
+    <% for( let i = 0; i < comics.length; i++ ) { %>
+        <div class="comic_block_wrapper bg-secondary p-2">
+            <div class="bg-dark p-2">
+                <a href=<%= `/read/${comics[i].id}` %> >
+                    <img src="<%= comics[i].comicCoverPath %>" width="100px" height="100px">
+                    <h3>title: <%= comics[i].comicName %></h3>
+                    <h3>Author: <%= comics[i].comicWriter %></h3>
+                    <h3>Status: <%= comics[i].comicStatus %></h3>
+                </a>
+            </div>
+        </div>
+    <% } %>
+<% } else { %>
+    <h2> Parece que no a compartido ningun comic :(  </h2>
+<% } %>
+
+<%- include ('../partials/footer.ejs') %>
+
+<% if (isUploader) { %>
+    <script>
+
+        let addSocial = document.getElementById('addSocial');
+        let socialForm = document.getElementById('socialForm');
+
+        addSocial.addEventListener('click',()=>{
+            socialForm.toggleAttribute('hidden');
+        })
+
+    </script>
+<% } %>
