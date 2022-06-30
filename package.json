@@ -13,6 +13,7 @@
     "bcryptjs": "^2.4.3",
     "connect-flash": "^0.1.1",
     "cookie-parser": "^1.4.6",
+    "darkmode-js": "^1.5.7",
     "ejs": "^3.1.8",
     "express": "^4.18.1",
     "express-flash": "^0.0.2",
@@ -28,6 +29,8 @@
     "node-stream-zip": "^1.15.0",
     "passport": "^0.5.3",
     "passport-local": "^1.0.0",
+    "pdfkit": "^0.13.0",
+    "pdfkit-table": "^0.1.99",
     "sequelize": "^6.20.1",
     "timeago.js": "^4.0.2"
   }

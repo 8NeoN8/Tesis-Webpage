@@ -38,12 +38,12 @@ const create_post =  async (req, res) => {
 
         //Eliminando espacios en el nombre del autor si los hay
         if(writer.includes(" ")){
-            writer = writer.replace(" ","-")
+            writer = writer.replaceAll(" ","-")
         }
         //Eliminando espacios en el nombre del comic si los hay para evitar problemas de lectura con el programa
         let comicName = req.body.comicName;
         if (comicName.includes(" ")) {
-            comicName = req.body.comicName.replace(" ","-");
+            comicName = req.body.comicName.replaceAll(" ","-");
         }
 
         //Directorio del comic
@@ -280,24 +280,19 @@ const profile_get = async (req,res) => {
     const comicId = req.params.comicId
     let user;
     let uploader = false;
-    if(req.user){
+    if(await req.user){
         await req.user.then(e => {
-            user = e[0];
+            user = e;
         })
-        user = user.dataValues
     }
 
-    const comicEntry = await models.ComicEntry.findOne({
-        where:{
-            id: comicId
-        }
-    })
+    const comicEntry = await models.ComicEntry.findByPk(comicId)
 
     const comic = comicEntry.dataValues;
 
 
     if (user) {
-        if (user.id === comic.comicUploader_id) {
+        if (user[0].id === comic.comicUploader_id) {
             uploader = true
         }
     }
@@ -308,6 +303,11 @@ const profile_get = async (req,res) => {
         }
     })
 
+    let uploaderData = await models.UserEntry.findAll({
+        where:{
+            id: comic.comicUploader_id
+        }
+    })
 
     for (let chapter of chapters) {
         chapter = chapter.dataValues;
@@ -322,7 +322,7 @@ const profile_get = async (req,res) => {
     if (user) {
         userLike = await models.likeEntry.findOne({
             where: {
-                user_id: user.id,
+                user_id: user[0].id,
                 comic_id: comicId
             }
         })
@@ -331,20 +331,21 @@ const profile_get = async (req,res) => {
         }
     }
 
-    console.log('hasLiked :>> ', hasLiked);
-
     const likes = await models.likeEntry.count({
         where: {
             comic_id: comicId
         }
     })
 
-    res.render('./comic/profile',{ hasLiked:hasLiked, likes:likes, isUploader: uploader, comic:comic, categories: categories, chapters:chapters ,title: comic.comicName, user:user, success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
+    res.render('./comic/profile',{ uploaderData:uploaderData,hasLiked:hasLiked, likes:likes, isUploader: uploader, comic:comic, categories: categories, chapters:chapters ,title: comic.comicName, user:user, success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
 }
 
 const read_get = async (req, res) =>{
 
-    let user; if (req.user) await req.user.then( e => {user = e[0]} );
+    let user; if (req.user) {
+        await req.user.then( e => {user = e} );
+    }
+    let settings;
     const params = req.params;
 
     let Comic = await models.ComicEntry.findAll({
@@ -408,7 +409,31 @@ const read_get = async (req, res) =>{
 
     const Url =  req.originalUrl;
 
-    res.render('comic/read',{title: title, user:user, comic:Comic, chapter:chapter, chapterPath:chapterPath, files:files, amountPages:amountPages, currentPage:currentPage, prevPage:prevPage, nextPage:nextPage, currentLink:currentLink, comments:comments, Url:Url})
+
+    if (user) {
+        let Setts = await models.SettingsEntry.findAll({
+            where: {
+                user_id: user[0].id,
+            }
+        })
+
+        for (let setting of Setts) {
+            setting = setting.dataValues
+        }
+
+        settings = {
+            pageTurnDirection: Setts[0].value,
+            imgScalling: Setts[1].value,
+            jumpOnPageTurn: Setts[2].value,
+            colorFilter: Setts[3].value,
+            filterOnOff: Setts[4].value,
+            imgDisplay: Setts[5].value,
+            focusMode: Setts[6].value,
+        };
+
+    }
+
+    res.render('comic/read',{title: title, user:user, settings:settings, comic:Comic, chapter:chapter, chapterPath:chapterPath, files:files, amountPages:amountPages, currentPage:currentPage, prevPage:prevPage, nextPage:nextPage, currentLink:currentLink, comments:comments, Url:Url,success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
 }
 
 const read_post = async (req, res) =>{
@@ -434,8 +459,6 @@ const read_post = async (req, res) =>{
         comic_id: comic.dataValues.id,
         commentText: req.body.commentText
     })
-
-    console.log('Comment :>> ', comment.dataValues);
 
     res.redirect('back')
 }
@@ -463,10 +486,12 @@ const edit_comic_get = async (req, res) => {
 
 const edit_comic_post = async (req, res) =>{
 
-    let comicId = req.params.comicId;
-    let uploaderId = req.params.uploaderId;
+    let comicId = await req.params.comicId;
+    let uploaderId = await req.params.uploaderId;
     console.log('params :>> ', req.params);
-    let user; await req.user.then( e => { user = e[0] }); user = user.dataValues
+    let user; if (await req.user){
+        req.user.then( e => { user = e[0] });
+    }
 
     let oldComicData = await models.ComicEntry.findOne({
         where:{
@@ -476,10 +501,10 @@ const edit_comic_post = async (req, res) =>{
     })
     oldComicData = oldComicData.dataValues;
 
-    if (req.body.comicName){
+    if (await req.body.comicName){
         let comicName = req.body.comicName;
         if (comicName.includes(" ")) {
-            comicName = req.body.comicName.replace(" ","-");
+            comicName = req.body.comicName.replaceAll(" ","-");
         }
 
         let oldPath = path.join(__dirname,'..','/public/uploads/',oldComicData.comicName)
@@ -544,8 +569,7 @@ const edit_comic_post = async (req, res) =>{
         })
 
     }
-
-    if (req.body.comicDescription){
+    if (await req.body.comicDescription){
         await models.ComicEntry.update({comicDescription: req.body.comicDescription},{
             where: {
                 id: comicId,
@@ -553,7 +577,7 @@ const edit_comic_post = async (req, res) =>{
             }
         })
     }
-    if (req.body.comicSchedule){
+    if (await req.body.comicSchedule){
         await models.ComicEntry.update({comicSchedule: req.body.comicSchedule},{
             where: {
                 id: comicId,
@@ -561,7 +585,7 @@ const edit_comic_post = async (req, res) =>{
             }
         })
     }
-    if (req.body.comicStart){
+    if (await req.body.comicStart){
         await models.ComicEntry.update({comicStart: req.body.comicStart},{
             where: {
                 id: comicId,
@@ -569,7 +593,7 @@ const edit_comic_post = async (req, res) =>{
             }
         })
     }
-    if (req.body.comicStatus){
+    if (await req.body.comicStatus){
         await models.ComicEntry.update({comicStatus: req.body.comicStatus},{
             where: {
                 id: comicId,
@@ -577,8 +601,7 @@ const edit_comic_post = async (req, res) =>{
             }
         })
     }
-
-    if (req.body.comicWriter) {
+    if (await req.body.comicWriter) {
         await models.ComicEntry.update({comicWriter: req.body.comicWriter},{
             where: {
                 id: comicId,
@@ -586,10 +609,11 @@ const edit_comic_post = async (req, res) =>{
             }
         })
     }
-
-
-    if(req.body.selectedCats){
-        await models.ComicEntry.update({selectedCats: req.body.selectedCats},{
+    if(await req.body.selectedCats){
+        console.log(req.body.selectedCats);
+        console.log('comicId :>> ', comicId);
+        console.log('uploaderId :>> ', uploaderId);
+        await models.ComicEntry.update({comicCategories: req.body.selectedCats},{
             where: {
                 id: comicId,
                 comicUploader_id: uploaderId
@@ -620,8 +644,8 @@ const delete_comic_post = async (req, res) => {
         }
     })
 
-    if (user.id !== uploaderData.id) {
-        console.log('no es  uploader');
+    if (user.id !== uploaderData.id && user.role === 0 ) {
+        console.log('no es uploader o admin');
         req.flash('error','Parece que no esta autorizado para borrar este comic, como llegaste hasta aqui?');
         res.redirect('/');
         return;
@@ -635,11 +659,20 @@ const delete_comic_post = async (req, res) => {
         return;
     }
 
-    if (!helpers.matchPassword(req.body.confirmComicDelete, uploaderData.password)) {
-        console.log('incorrecta');
-        req.flash('error','Contraseña incorrecta');
-        res.redirect('back');
-        return;
+    if (user.role === 1) {
+        if (!helpers.matchPassword(req.body.confirmComicDelete, user.password)) {
+            console.log('incorrecta');
+            req.flash('error','Contraseña incorrecta');
+            res.redirect('back');
+            return;
+        }
+    }else{
+        if (!helpers.matchPassword(req.body.confirmComicDelete, uploaderData.password)) {
+            console.log('incorrecta');
+            req.flash('error','Contraseña incorrecta');
+            res.redirect('back');
+            return;
+        }
     }
 
     try {
@@ -661,6 +694,12 @@ const delete_comic_post = async (req, res) => {
                 comic_id: comicId,
             }
         })
+
+        await models.likeEntry.destroy({
+            where: {
+                comic_id: comicId,
+            }
+        })
     } catch (err) {
         console.log(err);
         req.flash('error','No se pudo borrar correctamente de la bdd');
@@ -677,20 +716,22 @@ const delete_comic_post = async (req, res) => {
 const delete_chapter_get = async (req, res) => {
 
     let comicId = req.params.comicId;
-    let uploaderId = req.params.uploaderId;
+
     let chapId = req.params.chapterId;
     let user = await req.user;
     user = user[0].dataValues;
 
+    let comicData = await models.ComicEntry.findByPk(comicId);
+
+    let uploaderId = comicData.comicUploader_id;
+
     let uploaderData = await models.UserEntry.findByPk(uploaderId);
 
-    if (user.id !== uploaderData.id) {
+    if (user.id !== uploaderData.id && user.role === 0) {
         req.flash('error','Parece que no esta autorizado para borrar este capitulo, como llegaste hasta aqui?');
         res.redirect('/');
         return;
     }
-
-    let comicData = await models.ComicEntry.findByPk(comicId);
 
     let chapterData = await models.ComicEntry.findByPk(chapId);
 
@@ -719,45 +760,6 @@ const delete_chapter_get = async (req, res) => {
 
     req.flash('success','El capitulo fue removido');
     res.redirect('back');
-    return
-    console.log(req.params);
-
-    if (comic.includes("-")) {
-        comic = comic.replaceAll("-"," ")
-    }
-
-    if (user.name !== uploader) {
-        req.flash('error','Error. User not allowed to delete');
-        res.redirect('/index');
-        return;
-    }
-
-    if (user.name === uploader) {
-
-        console.log(comic);
-        pool.query('USE tesis');
-        let theComic = await pool.query('SELECT * FROM comics WHERE comicName = ?',[comic]);
-        console.log(theComic);
-
-        let delPath = await '/public/uploads/'+uploader+'/'+theComic[0].comicOgWriter+"/"+chap
-
-        let chapN = chap.slice(-1);
-
-        console.log(comic,delPath,chap,chapN);
-
-
-        pool.query('USE tesis')
-        pool.query('DELETE FROM chapters WHERE chapterComic = ? AND chapterNumber = ?',[comic,chapN]);
-
-        try {
-            fs.unlinkSync(delPath);
-        } catch (err) {
-            console.log(err);
-        }
-        req.flash('success','"Chapter deleted');
-        res.redirect('../');
-    }
-
 }
 
 const likes_post = async (req, res) => {
@@ -767,7 +769,20 @@ const likes_post = async (req, res) => {
     }
     let comicId = req.params.comicId;
 
-    let newLike = await models.likeEntry.create({user_id: user.id, comic_id: comicId});
+    let hasLiked = req.params.hasLiked;
+
+    if (hasLiked !== "true") {
+        let newLike = await models.likeEntry.create({user_id: user.id, comic_id: comicId});
+        res.redirect('back');
+        return
+    }
+
+    await models.likeEntry.destroy({
+        where: {
+            user_id: user.id,
+            comic_id: comicId
+        }
+    })
 
     res.redirect('back');
 }
@@ -784,11 +799,19 @@ const deleteComment_post = async (req, res) => {
 
     console.log(comment.dataValues);
 
-    if (user.id !== comment.dataValues.user_id) {
+    if (user.id !== comment.dataValues.user_id && user.role === 0) {
         req.flash('error','Usuario no permitido para editar')
         res.redirect('back')
     }
 
+    await models.CommentEntry.destroy({
+        where: {
+            id: commentId
+        }
+    })
+
+    req.flash('success','Commentario removido')
+    res.redirect('back')
 }
 
 function deleteFolderRecursive(path) {

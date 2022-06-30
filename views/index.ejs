@@ -1,73 +1,146 @@
 <%- include ('./partials/head.ejs') %>
 <%- include ('./partials/message.ejs') %>
-<body>
-    <% if (user) { %>
-        <h1>Hola <%= user[0].dataValues.username %> </h1>
-        <%- include ('./partials/navLogged.ejs',{user:user[0].dataValues}) %>
-    <% } else { %>
-        <%- include ('./partials/navGuest.ejs') %>
+
+<%- include ('./partials/message.ejs') %>
+
+<% if (user) { %>
+    <h1>Hello <% console.log('user :>> ', user); %> </h1>
+    <%- include ('./partials/navLogged.ejs') %>
+<% } else { %>
+    <%- include ('./partials/navGuest.ejs',{user:user}) %>
+<% } %>
+
+<!-- <div class="form-group m-2">
+    <form action="/notif" method="post">
+        <select name="notCtx" id="notCtx">
+            <option value="">Contenido inapropiado</option>
+            <option value="">Lenguaje ofensivo</option>
+            <option value=""></option>
+            <option value=""></option>
+            <option value=""></option>
+            <option value=""></option>
+            <option value=""></option>
+        </select>
+        <br>
+
+        <textarea name="notMsg" id="notMsg" cols="60" rows="3" placeholder="Escriba algo adicional si lo desea"></textarea>
+
+        <h5>from(if(user.role = 0) > user to admin)(if(user.role = 1) > admin to user)</h5>
+        <h5>from(if(comicUpload) > null</h5>
+        <h5>if(comicUpload) = notif.context = upload</h5>
+    </form>
+</div> -->
+
+<% if (user) { %>
+    <% console.log(user[0].role); %>
+    <% if (user[0].role === 1) { %>
+        <div class="position-relative " style="width: 100%;">
+            <h1 style="text-align:center;">Usuarios registrados</h1>
+            <% if (users.length > 0) { %>
+                <div class="user p-2 bg-dark">
+                    <% users.forEach(user => { %>
+                        <h4 class="text-light"><%= user.name %> </h4>
+                        <h4 class="text-light"><%= user.email %> </h4>
+                        <a href="/user/deleteUser/<%= user.id %> class="text-light"">deleteUser</a>
+                        <a href="/user/editUser/<%= user.id %> class="text-light"">editUser</a>
+                    <% }) %>
+                </div>
+            <% }else {%>
+                <h3>No hay usuarios registrados</h3>
+            <% } %>
+        </div>
     <% } %>
+<% } %>
 
-    <div class="position-relative " style="width: 100%;">
-
-        <h1 style="text-align:center;">Usuarios registrados</h1>
-
-        <% if (users.length > 0) { %>
-            <div class="user p-2 bg-dark">
-                <% users.forEach(user => { %>
-                    <h4 class="text-light"><%= user.name %> </h4>
-                    <h4 class="text-light"><%= user.email %> </h4>
-                    <a href="/user/deleteUser/<%= user.id %> class="text-light"">deleteUser</a>
-                    <a href="/user/editUser/<%= user.id %> class="text-light"">editUser</a>
-                <% }) %>
+<% if (newComics.length>0) { %>
+    <br>
+    <h3 class="bg-primary text-light py-1">Comics Nuevos!</h3>
+    <% for( let i = 0; i < 5; i++ ) { %>
+        <% if (newComics[i]) { %>
+            <div class="comic_block_wrapper bg-secondary p-2">
+                <div class="bg-dark p-2">
+                    <a href=<%= `/read/${newComics[i].dataValues.id}` %>>
+                        <img src="<%= newComics[i].dataValues.comicCoverPath %>" width="100px" height="100px">
+                        <h3>title: <%= newComics[i].dataValues.comicName %></h3>
+                        <h3>Author: <%= newComics[i].dataValues.comicWriter %></h3>
+                        <h3>Status: <%= newComics[i].dataValues.comicStatus %></h3>
+                    </a>
+                </div>
             </div>
-        <% }else {%>
-            <h3>No hay usuarios registrados</h3>
-        <% } %>
-    </div>
-
-    <% if (newComics.length>0) { %>
-        <br>
-        <h3 class="bg-primary text-light py-1">Comics Nuevos!</h3>
-        <% for( let i = 0; i < 5; i++ ) { %>
-            <% if (newComics[i]) { %>
-                <div class="comic_block_wrapper bg-secondary p-2">
-                    <div class="bg-dark p-2">
-                        <% console.log('iteration :>> ', i); %>
-                        <% console.log(newComics[i]); %>
-                        <a href=<%= `/read/${newComics[i].dataValues.id}` %>>
-                            <img src="<%= newComics[i].dataValues.comicCoverPath %>" width="100px" height="100px">
-                            <h3>title: <%= newComics[i].dataValues.comicName %></h3>
-                            <h3>Author: <%= newComics[i].dataValues.comicWriter %></h3>
-                            <h3>Status: <%= newComics[i].dataValues.comicStatus %></h3>
-                        </a>
-                    </div>
-                </div>
-            <% } %>
         <% } %>
     <% } %>
+<% } %>
 
-    <% if (updatedComics.length>0) { %>
-        <br>
-        <h3 class="bg-primary text-light py-1">Comics Recientemente Actualizados!</h3>
-        <% for( let i = 0; i < 5; i++ ) { %>
-            <% if (updatedComics[i]) { %>
-                <div class="comic_block_wrapper bg-secondary p-2">
-                    <div class="bg-dark p-2">
-                        <% console.log('iteration :>> ', i); %>
-                        <% console.log(updatedComics[i]); %>
-                        <a href=<%= `/read/${updatedComics[i].dataValues.id}` %>>
-                            <img src="<%= updatedComics[i].dataValues.comicCoverPath %>" width="100px" height="100px">
-                            <h3>title: <%= updatedComics[i].dataValues.comicName %></h3>
-                            <h3>Author: <%= updatedComics[i].dataValues.comicWriter %></h3>
-                            <h3>Status: <%= updatedComics[i].dataValues.comicStatus %></h3>
-                        </a>
-                    </div>
+<% if (updatedComics.length>0) { %>
+    <br>
+    <h3 class="bg-primary text-light py-1">Comics Recientemente Actualizados!</h3>
+    <% for( let i = 0; i < 5; i++ ) { %>
+        <% if (updatedComics[i]) { %>
+            <div class="comic_block_wrapper bg-secondary p-2">
+                <div class="bg-dark p-2">
+                    <a href=<%= `/read/${updatedComics[i].dataValues.id}` %>>
+                        <img src="<%= updatedComics[i].dataValues.comicCoverPath %>" width="100px" height="100px">
+                        <h3>title: <%= updatedComics[i].dataValues.comicName %></h3>
+                        <h3>Author: <%= updatedComics[i].dataValues.comicWriter %></h3>
+                        <h3>Status: <%= updatedComics[i].dataValues.comicStatus %></h3>
+                    </a>
                 </div>
-            <% } %>
+            </div>
         <% } %>
     <% } %>
+<% } %>
 
-    <%- include ('./partials/footer.ejs') %>
-</body>
-</html>
+<% if (likedWeek.length>0) { %>
+    <br>
+    <h3 class="bg-primary text-light py-1">Comics Mas Gustados de la Semana!</h3>
+    <% for( let i = 0; i < 5; i++ ) { %>
+        <% if (likedWeek[i]) { %>
+            <div class="comic_block_wrapper bg-secondary p-2">
+                <div class="bg-dark p-2">
+                    <a href=<%= `/read/${likedWeek[i].id}` %>>
+                        <img src="<%= likedWeek[i].comicCoverPath %>" width="100px" height="100px">
+                        <h3>title: <%= likedWeek[i].comicName %></h3>
+                        <h3>Author: <%= likedWeek[i].comicWriter %></h3>
+                        <h3>Status: <%= likedWeek[i].comicStatus %></h3>
+                    </a>
+                </div>
+            </div>
+        <% } %>
+    <% } %>
+<% } %>
+<% if (rngTags) { %>
+    <br>
+    <h3 class="bg-primary text-light py-1">Comics categoria: <%= rngTags[0] %> </h3>
+    <% for( let i = 0; i < 5; i++ ) { %>
+        <% if (randomTag1[i]) { %>
+            <div class="comic_block_wrapper bg-secondary p-2">
+                <div class="bg-dark p-2">
+                    <a href=<%= `/read/${randomTag1[i].id}` %>>
+                        <img src="<%= randomTag1[i].comicCoverPath %>" width="100px" height="100px">
+                        <h3>title: <%= randomTag1[i].comicName %></h3>
+                        <h3>Author: <%= randomTag1[i].comicWriter %></h3>
+                        <h3>Status: <%= randomTag1[i].comicStatus %></h3>
+                    </a>
+                </div>
+            </div>
+        <% } %>
+    <% } %>
+    <br>
+    <h3 class="bg-primary text-light py-1">Comics categoria: <%= rngTags[1] %></h3>
+    <% for( let i = 0; i < 5; i++ ) { %>
+        <% if (randomTag2[i]) { %>
+            <div class="comic_block_wrapper bg-secondary p-2">
+                <div class="bg-dark p-2">
+                    <a href=<%= `/read/${randomTag2[i].id}` %>>
+                        <img src="<%= randomTag2[i].comicCoverPath %>" width="100px" height="100px">
+                        <h3>title: <%= randomTag2[i].comicName %></h3>
+                        <h3>Author: <%= randomTag2[i].comicWriter %></h3>
+                        <h3>Status: <%= randomTag2[i].comicStatus %></h3>
+                    </a>
+                </div>
+            </div>
+        <% } %>
+    <% } %>
+<% } %>
+
+<%- include ('./partials/footer.ejs') %>

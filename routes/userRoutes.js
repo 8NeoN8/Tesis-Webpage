@@ -104,22 +104,8 @@ function deleteFolderRecursive(path) {
 module.exports = router;
 
 /*
-!hacer main page shit
 !sistema de notifs de seguidos
-!acomodar el read(nuevo modo de mostrar las imagenes y poner las configuraciones/controles)
-
-
-
-!hacer admin pages
 
 !hacer reportes(solo los admins)
-
-!agregar sugerencias de usuarios para admins
-
-!sistema de mensaje global de admins
-
-
-
-TODO arreglar imagen de bdd
 
 */

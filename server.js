@@ -1,6 +1,4 @@
-//! YOU HAVE 3 DAYS TO MAKE A WORKING PROTOTYPE
-
-//*Llamando modulos para el funcionamiento del servidor
+//Llamando modulos para el funcionamiento del servidor
 const express = require('express');
 const morgan = require('morgan');
 const userRoutes = require('./routes/userRoutes')
@@ -52,6 +50,13 @@ app.use(async (req,res,next) => {
 
 //Enrutamiento principal
 app.get('/', async (req, res) => {
+    let user; if (await req.user) {
+        req.user.then( e => {user = e[0]} );
+    }
+    if (user) {
+        user= user[0].dataValues
+    }
+
     if(req.session.returnTo){
         req.session.returnTo = ""
     }
@@ -75,9 +80,92 @@ app.get('/', async (req, res) => {
         comic = comic.dataValues
     }
 
-    res.render('index', {title: 'Pagina Principal', updatedComics:updatedComics, newComics:newComics, users: users, user: app.locals.user ,success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
+    let Liked = await models.likeEntry.findAll({
+        where: {
+            createdAt: {
+              [Op.lt]: new Date(),
+              [Op.gt]: new Date(new Date() - 24 * 60 * 60 * 7000)
+            }
+          },
+    })
+
+
+    let comicsLiked = [];
+    for (let like of Liked) {
+        comicsLiked.push(like.dataValues.comic_id);
+    }
+
+    comicsLiked = [...new Set(comicsLiked)];
+    //console.log('comicsLiked :>> ', comicsLiked);
+
+    let likedWeek = [];
+
+    for (let i = 0; i < comicsLiked.length; i++) {
+        let hott = await models.likeEntry.count({
+            where: {
+                comic_id: comicsLiked[i],
+                createdAt: {
+                  [Op.lt]: new Date(),
+                  [Op.gt]: new Date(new Date() - 24 * 60 * 60 * 7000)
+                }
+              },
+        })
+        hottest = {comic_id: comicsLiked[i], likeCount: hott}
+        likedWeek.push(hottest);
+    }
+
+    likedWeek.sort((a, b) => parseFloat(a.likeCount) - parseFloat(b.likeCount));
+    likedWeek = likedWeek.reverse().slice(0,6);
+
+    let rng = (min, max) =>{
+        return Math.floor(Math.random() * (max - min) + min);
+    }
+
+    let cats = ["acción","comedia","misterio","aventura","drama","terror","fantasia","romance","vida-escolar","vida-cotidiana","ciencia-ficcion","deportes","maduro","crimen","psicologico","artes-marciales"]
+
+    let rngTags=[ cats[rng(0,cats.length)], cats[rng(0,cats.length)] ];
+
+    let randomTag1 = await models.ComicEntry.findAll({
+        where:{
+            comicCategories: {
+                [Op.like]: '%' + rngTags[0] + '%'
+            },
+        }
+    })
+    randomTag1 = randomTag1.slice(0,6);
+
+    let randomTag2 = await models.ComicEntry.findAll({
+        where:{
+            comicCategories: {
+                [Op.like]: '%' + rngTags[1] + '%'
+            },
+        }
+    })
+    randomTag2 = randomTag2.slice(0,6);
+
+    for (let i = 0; i < likedWeek.length; i++) {
+        if (likedWeek[i]) {
+            likedWeek[i] = await models.ComicEntry.findByPk(likedWeek[i].comic_id);
+            likedWeek[i] = likedWeek[i].dataValues
+        }
+
+        if (randomTag1[i]) {
+            randomTag1[i] = randomTag1[i].dataValues
+        }
+        if (randomTag2[i]) {
+            randomTag2[i] = randomTag2[i].dataValues
+        }
+    }
+
+
+    res.render('index', {title: 'Pagina Principal',rngTags:rngTags, randomTag2:randomTag2,randomTag1:randomTag1, likedWeek:likedWeek, updatedComics:updatedComics, newComics:newComics, users: users, user: app.locals.user ,success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
 })
-app.get('/about',(req, res) => {
+app.get('/about',async (req, res) => {
+    let user; if (await req.user) {
+        req.user.then( e => {user = e[0]} );
+        user = user.dataValues;
+        console.log(user);
+    }
     res.render('about',{title: 'Pagina de Informacion', success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
 })
 app.get('/index',(req, res) => {
@@ -172,7 +260,11 @@ async (req,res) => {
 })
 app.get('/search',async (req, res) => {
 
-    let user; if (req.user) await req.user.then( e => {user = e[0]} ); console.log(user);
+    let user; if (await req.user) {
+        req.user.then( e => {user = e[0]} );
+        user = user.dataValues;
+        console.log(user);
+    }
 
     let comics = await models.ComicEntry.findAll();
     if (comics.length > 0) {
@@ -180,44 +272,99 @@ app.get('/search',async (req, res) => {
             comic = comic.dataValues;
         }
     }
-    res.render('comic/search', {title: 'Search Comic', user:user, comics: comics,success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
+    res.render('comic/search', {title: 'Buscar Comic', user:user, comics: comics,success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
 })
 app.post('/search', async (req, res) => {
-    let user;
-    if(req.user){
-        await req.user.then(e => {
-        user = e[0];
-    })
+    let user; if (await req.user) {
+        req.user.then( e => {user = e[0]} );
+        user = user.dataValues;
+        console.log(user);
     }
-    let comicName = await req.body.comicSearch;
     let search;
+    let comicName;
+    let comicTag;
 
-
-    if(comicName.includes(" ")){
-        comicName = comicName.split(" ")
-        comicName.forEach(async (query) => {
-            search = await models.ComicEntry.findAll({
-                where: {
-                    comicName: {
-                        [Op.like]: '%' + query + '%'
-                    }
+    if (await req.body.comicSearch && await req.body.cats) {
+        comicTag = req.body.cats
+        comicName = req.body.comicSearch
+        console.log('params: >> ',comicTag,comicName);
+        search = await models.ComicEntry.findAll({
+            where: {
+                comicCategories: {
+                    [Op.like]: '%' + comicTag + '%'
+                },
+                comicName: {
+                    [Op.like]: '%' + comicName + '%'
                 }
-            })
-
-            if (search.length>=1) {
-                res.render('comic/search', {title: 'Search Comic', user:user, comics: search ,success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
-                return
             }
-        });
-    }
+        })
 
-    search = await models.ComicEntry.findAll({
-        where: {
-            comicName: {
-                [Op.like]: '%' + comicName + '%'
+        if (search) {
+            count = 0
+            for (const comic of search) {
+                count++
+                console.log(`comic ${count}`,comic.dataValues);
             }
         }
-    })
+    }
+
+    if (await req.body.cats !== "---" && !await req.body.comicSearch) {
+        comicTag = req.body.cats
+        console.log(comicTag);
+        search = await models.ComicEntry.findAll({
+            where: {
+                comicCategories: {
+                    [Op.like]: '%' + comicTag + '%'
+                }
+            }
+        })
+
+        if (search) {
+            count = 0
+            for (const comic of search) {
+                count++
+                console.log(`comic ${count}`,comic.dataValues);
+            }
+        }
+    }
+
+    if (await req.body.comicSearch && await req.body.cats === "---" ) {
+        comicName = req.body.comicSearch
+
+        if(comicName.includes(" ")){
+            comicName = comicName.split(" ")
+            comicName.forEach(async (query) => {
+                search = await models.ComicEntry.findAll({
+                    where: {
+                        comicName: {
+                            [Op.like]: '%' + query + '%'
+                        }
+                    }
+                })
+
+                if (search.length>=1) {
+                    res.render('comic/search', {title: 'Search Comic', user:user, comics: search ,success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
+                    return
+                }
+            });
+        }
+
+        search = await models.ComicEntry.findAll({
+            where: {
+                comicName: {
+                    [Op.like]: '%' + comicName + '%'
+                }
+            }
+        })
+
+        if (search) {
+            count = 0
+            for (const comic of search) {
+                count++
+                console.log(`comic ${count}`,comic.dataValues);
+            }
+        }
+    }
 
     if (search.length<1) {
         req.flash('error','No comic found');
@@ -230,14 +377,20 @@ app.get('/read/:comicId', controller.profile_get);
 app.get('/read/:comicId/:chapter/:page', controller.read_get);
 app.post('/read/:comicId/:chapter/:page', controller.read_post);
 
-
-//Enrutamiento de comics
+//Enrutamiento de procesos de comics
 app.use('/comic', comicRoutes)
 
-//Enrutamiento de Usuarios
+//Enrutamiento de precesos de  Usuarios
 app.use('/user', userRoutes)
 
 //Pagina 404 No Encontrado
 app.use((req,res)=>{
     res.status(404).render('404',{title: 'Oops!', success:req.flash('success'), error:req.flash('error'), message:req.flash('message')});
 })
+
+/*
+subir
+actualizar
+crear usuario
+las opciones
+*/

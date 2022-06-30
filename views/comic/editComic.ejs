@@ -9,7 +9,6 @@
 <% } %>
 
 <form action=<%= `/comic/edit/${uploaderId}/${comicId}` %> enctype="multipart/form-data" method="post" class="p-3 bg-dark text-light">
-
     <div class="form-group m-2">
         <label for="comicName">Nombre/Titulo</label>
         <input type="text" name="comicName" id="comicName">
@@ -19,14 +18,17 @@
         <label for="comicDescription">Descripción</label><br>
         <textarea type="text" name="comicDescription" id="comicDescription" cols="50" rows="4"></textarea>
     </div>
+
     <div class="form-group m-2">
         <label for="CoverImage">Imagen de Portada</label>
         <input type="file" name="CoverImage" id="CoverImage" accept="image/*">
     </div>
+
     <div class="form-group m-2">
         <label for="comicStart">Fecha de Inicio</label>
         <input type="date" name="comicStart" id="comicStart">
     </div>
+
     <div class="form-group m-2">
         <label for="comicSchedule">Frecuencia de Publicación</label>
         <select  name="comicSchedule" id="comicSchedule">
@@ -39,6 +41,7 @@
             <option value="TriMensual">TriMensual</option>
         </select>
     </div>
+
     <div class="form-group m-2">
         <label for="comicStatus">Estado de publicacion</label>
         <select name="comicStatus" id="comicStatus">
@@ -48,10 +51,12 @@
             <option value="Abandonado">Abandonado</option>
         </select>
     </div>
+
     <div class="form-group m-2">
         <label for="isWriter">El usuario es el autor del comic?</label>
         <input type="checkbox" name="isWriter" id="isWriter" checked>
     </div>
+
     <div class="form-group m-2">
         <label for="comicWriter">Autor Original</label>
         <input type="text" name="comicWriter" id="comicWriter" disabled>
@@ -59,19 +64,21 @@
 
     <div class="form-group m-2">
         <label for="selectedCats">Categorias Seleccionadas</label>
-        <input type="text" name="selectedCats" id="selectedCats">
+        <input type="text" name="selectedCats" id="selectedCats" readonly>
     </div>
 
     <div id="categories-block"></div>
-    <button type="button" id="addCat">Add another category</button>
-    <button type="button" id="revCat">Remove last category</button>
-    <button type="submit" id="register">Register</button>
+    <button type="button" id="addCat">Agregar Categoria</button>
+    <button type="button" id="revCat">Remover ultima categoria</button>
+    <button type="submit" id="register">Registrar</button>
 
 </form>
 
+<%- include ('../partials/footer.ejs') %>
+
 <script>
     let check = document.getElementById('isWriter')
-    let og = document.getElementById('comicOgWriter')
+    let og = document.getElementById('comicWriter')
     check.addEventListener('click', () => {
         og.toggleAttribute('disabled')
     })
@@ -79,10 +86,9 @@
     let cats = document.getElementById('categories-block')
     let addCat = document.getElementById('addCat')
 
-    let catGroup = ["---","action","comedy","mistery","adventure","drama","horror","fantasy","romance","school life","slice of life","sci-fi","sports","mature","crime","psychological","martial arts"]
+    let catGroup = ["---","acción","comedia","misterio","aventura","drama","terror","fantasia","romance","vida-escolar","vida-cotidiana","ciencia-ficcion","deportes","maduro","crimen","psicologico","artes-marciales"]
 
     let selCats = document.getElementById('selectedCats');
-    selCats.value = ""
     let register = document.getElementById('register');
 
     cats.addEventListener('load',createCats())
@@ -96,7 +102,7 @@
 
         let catLabel = document.createElement('label');
         catLabel.setAttribute('for','cat'+catAmount);
-        catLabel.textContent = "Category"+catAmount;
+        catLabel.textContent = "Categoria "+catAmount;
 
         let catSelect = document.createElement('select');
         catSelect.setAttribute('name','cat'+catAmount);
@@ -118,10 +124,12 @@
 
         catSelect.addEventListener('change',()=>{
             let value = catSelect.options[catSelect.selectedIndex].value;
+            console.log(value);
             if(value === "---") return
             if(selCats.value.includes(value))return
             selCats.value += ','+value;
             catSelect.toggleAttribute('disabled')
+            console.log(selCats.value)
         })
     }
 
@@ -143,10 +151,6 @@
             select.toggleAttribute('disabled')
             selCats.value = "";
         }
-    })
-
-    register.addEventListener('click',()=>{
-        selCats.toggleAttribute('disabled')
     })
 
 </script>

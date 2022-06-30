@@ -7,19 +7,22 @@ const fs = require('fs');
 const path = require('path');
 
 const settings_get = async (req, res) => {
-    let user; await req.user.then(e => {user = e[0].dataValues;})
+    let user; if (await req.user) {
+        await req.user.then(e => {user = e;})
+    }
+    console.log('user :>> ', user);
 
     let userId = req.params.id
 
-    if (user.id !== parseInt(userId)) {
+    if (user[0].id !== parseInt(userId)) {
         req.flash('error','Usuario no permitido para editar');
         res.redirect('back');
         return
     }
 
-    const title = `Configuracion ${user.username}`
+    const title = `Configuracion ${user[0].username}`
 
-    res.render('user/settings', {title: title, success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
+    res.render('user/settings', {title: title, user:user, success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
 }
 
 const settings_post = async (req, res) => {
@@ -47,14 +50,6 @@ const settings_post = async (req, res) => {
         })
     }
 
-    if (req.body.imgScalling) {
-        await models.SettingsEntry.update({value:req.body.imgScalling},{
-            where: {
-                user_id: req.params.id,
-                setting:"imgScalling"
-            }
-        })
-    }
 
     if (req.body.jumpPage) {
         await models.SettingsEntry.update({value:req.body.jumpPage},{
@@ -88,24 +83,6 @@ const settings_post = async (req, res) => {
             where: {
                 user_id: req.params.id,
                 setting:"filterOnOff"
-            }
-        })
-    }
-
-    if (req.body.imgDisplay) {
-        await models.SettingsEntry.update({value:req.body.imgDisplay},{
-            where: {
-                user_id: req.params.id,
-                setting:"imgDisplay"
-            }
-        })
-    }
-
-    if (req.body.focusMode) {
-        await models.SettingsEntry.update({value:req.body.focusMode},{
-            where: {
-                user_id: req.params.id,
-                setting:"focusMode"
             }
         })
     }
@@ -260,14 +237,15 @@ const userProfile_get = async (req, res) => {
 
     let user;
     let isUploader = false;
-    let userId = parseInt(req.params.userId);
+    let userId = req.params.userId;
+
     if (req.user) {
-        await req.user.then( e => {user = e[0]});
-        if (user.id === userId) {
+        await req.user.then( e => {user = e});
+        if (user[0].id === userId) {
             isUploader = true;
         }
+        console.log('user :>> ', user[0]);
     }
-
     let userEntry = await models.UserEntry.findByPk(userId);
 
     if (!userEntry) {

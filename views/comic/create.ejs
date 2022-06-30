@@ -71,6 +71,7 @@
     <button type="submit" id="register">Registrar</button>
 
 </form>
+<%- include ('../partials/footer.ejs') %>
 
 <script>
     let check = document.getElementById('isWriter')
@@ -87,7 +88,7 @@
     let cats = document.getElementById('categories-block')
     let addCat = document.getElementById('addCat')
 
-    let catGroup = ["---","action","comedy","mistery","adventure","drama","horror","fantasy","romance","school life","slice of life","sci-fi","sports","mature","crime","psychological","martial arts"]
+    let catGroup = ["---","acción","comedia","misterio","aventura","drama","terror","fantasia","romance","vida-escolar","vida-cotidiana","ciencia-ficcion","deportes","maduro","crimen","psicologico","artes-marciales"]
 
     let selCats = document.getElementById('selectedCats');
     selCats.value = ""
@@ -105,7 +106,7 @@
 
         let catLabel = document.createElement('label');
         catLabel.setAttribute('for','cat'+catAmount);
-        catLabel.textContent = "Category"+catAmount;
+        catLabel.textContent = "Categoria "+catAmount;
 
         let catSelect = document.createElement('select');
         catSelect.setAttribute('name','cat'+catAmount);

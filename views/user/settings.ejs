@@ -3,11 +3,16 @@
 <h1>Configuracion</h1>
 
 <% if (user) { %>
-    <h1>Hello <%= user[0].dataValues.username %> </h1>
-    <%- include ('../partials/navLogged.ejs',{user:user[0].dataValues}) %>
+    <%- include ('../partials/navLogged.ejs',{user:user}) %>
 <% } else { %>
     <h1>user not logged in</h1>
     <%- include ('../partials/navGuest.ejs') %>
+<% } %>
+
+<% if (user[0].role === 1) { %>
+    <div id="reportDiv">
+
+    </div>
 <% } %>
 
 <form action=<%= `../settings/${user[0].dataValues.id}` %>  method="post" enctype="multipart/form-data">
@@ -21,14 +26,6 @@
         <option value="rl">Derecha-Izquierda</option>
         <option value="ud">Arriba-Abajo</option>
         <option value="du">Abajo-Arriba</option>
-    </select>
-    <br>
-
-    <label for="imgScalling">Escalado de imagen</label>
-    <select name="imgScalling" id="imgScalling">
-        <option selected></option>
-        <option value="screen">Encajar a pantalla</option>
-        <option value="horizontal">Encajar horizontal</option>
     </select>
     <br>
 
@@ -63,25 +60,6 @@
         <label for="filterOff">No</label>
         <input type="radio" name="filterOnOff" id="filterOff" value="off">
     </div>
-    <br>
-
-    <label for="imgDisplay">Imagenes a mostrar</label>
-    <select name="imgDisplay" id="imgDisplay">
-        <option selected></option>
-        <option value="1">1 Pagina</option>
-        <option value="3">3 Paginas</option>
-        <option value="5">5 Paginas</option>
-        <option value="all">Todas las Paginas</option>
-
-    </select>
-    <br>
-
-    <label for="focusMode">Modo Focus</label>
-    <label for="focusOn">Si</label>
-    <input type="radio" name="focusMode" id="focusOn" value="on">
-    <label for="focusOff">No</label>
-    <input type="radio" name="focusMode" id="focusOff" value="off">
-    <br>
     <br>
 
     <h4>Opciones de usuario</h4>
@@ -134,27 +112,7 @@
 
 </form>
 
- <!--
-        *page turning
-            left-right
-            right-left
-            up-down
-            down-up
-        *image scalling
-            fit-horizontally(original with)
-            fit-screen(scalled to view height)
-        *jump on page turn
-            top of image
-            top of controls
-            don't jump
-        *image color filter
-            color display
-            custom color
-        *only image display
-            shows only the image on a black background and a button to get out of this display
-
-    -->
-
+<%- include ('../partials/footer.ejs') %>
 <script>
     let pfpImg = document.getElementById('pfpImg')
     let input = document.getElementById('userPfp');
@@ -170,7 +128,4 @@
             if(!pfpImg.hasAttribute('hidden')) pfpImg.toggleAttribute('hidden')
         }
     })
-    //history.replaceState("","","/login")
 </script>
-
-<%- include ('../partials/footer.ejs') %>

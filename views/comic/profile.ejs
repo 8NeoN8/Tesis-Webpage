@@ -1,6 +1,7 @@
 <%- include ('../partials/head.ejs') %>
+<%- include ('../partials/message.ejs') %>
 <% if (user) { %>
-    <%- include ('../partials/navLogged.ejs') %>
+    <%- include ('../partials/navLogged.ejs',{user:user}) %>
 <% } else { %>
     <%- include ('../partials/navGuest.ejs') %>
 <% } %>
@@ -8,20 +9,32 @@
 <% if (comic) { %>
     <div class="bg-secondary p-2">
         <% let readUrl = `/read/${comic.id}/1/1` %>
-        <h1><a href="<%= readUrl %> ">LEER</a></h1>
-        <h2><%= comic.comicName %> </h2>
-        <h2><%= comic.comicDescription %> </h2>
+        <h1 class="bg-dark"><a href="<%= readUrl %> ">LEER</a></h1>
+        <h2 class="bg-dark"><%= comic.comicName %> </h2>
+        <h2 class="bg-dark"><%= comic.comicDescription %> </h2>
         <img src="<%= comic.comicCoverPath %>" alt="">
-        <div class="text-dark">
+        <% console.log('writer :>> ', comic.comicWriter); %>
+        <% console.log('uploader :>> ', uploaderData[0].username); %>
+        <h2 class="bg-dark">Autor del comic <% if (comic.comicWriter === uploaderData[0].username) { %>
+            <a class="text-warning" href=<%= `/user/profile/${uploaderData[0].id}` %>><%= comic.comicWriter %></a>
+        <% } else {%>
+            <%= comic.comicWriter %>
+        <% } %></h2>
+       <h2 class="bg-dark">
+        Encargado del comic: <a class="text-warning" href=<%= `/user/profile/${uploaderData[0].id}` %>> <%= comic.comicWriter %></a>
+       </h2>
+
+        <div class="bg-dark p-1">
             <h3>Categorias</h3>
             <% for( let i = 0; i < categories.length; i++ ) { %>
               <p><%= categories[i] %> </p>
             <% } %>
         </div>
 
+
         <% if (user) { %>
-            <form action=<%= `/comic/like/${comic.id}/${user.id}` %>  method="post">
-                <button class="<% if (hasLiked) { %> btn-secondary <% } else { %> btn-danger <% } %> fs-5 px-2 py-2" type="submit" <% if (hasLiked) { %> disabled <% } %>>
+            <form action=<%= `/comic/like/${comic.id}/${user.id}/${hasLiked}` %>  method="post">
+                <button class="<% if (hasLiked) { %> btn-secondary <% } else { %> btn-danger <% } %> fs-5 px-2 py-2" type="submit">
                     Me gusta! (<%= likes %>)
                 </button>
             </form>
@@ -29,17 +42,27 @@
             <h3>Los me gusta solo estan disponibles al iniciar sesion</h3>
         <% } %>
 
-        <% if (isUploader) { %>
-            <a href=<%= `/comic/edit/${user.id}/${comic.id}` %> id="editComicLink">Editar comic</a>
-            <button id="deleteComic">Eliminar comic</button>
+        <% if (user) { %>
+            <% if (isUploader) { %>
+                <a href=<%= `/comic/edit/${user.id}/${comic.id}` %> id="editComicLink">Editar comic</a>
+                <button id="deleteComic" class="btn-primary">Eliminar comic</button>
 
-            <form action=<%= `/comic/delete/${user.id}/${comic.id}` %> id="deleteForm" method="post" hidden>
-                <h3>¿De verdad quiere borrar este comic?</h3>
-                <label for="confirmComicDelete">Confirmar con Contraseña:</label><br>
-                <input type="password" name="confirmComicDelete" id="confirmComicDelete">
-                <button type="submit">Eliminar</button>
-            </form>
+                <form action=<%= `/comic/delete/${comic.comicUploader_id}/${comic.id}` %> id="deleteForm" method="post" hidden>
+                    <h3>¿De verdad quiere borrar este comic?</h3>
+                    <label for="confirmComicDelete">Confirmar con Contraseña:</label><br>
+                    <input type="password" name="confirmComicDelete" id="confirmComicDelete">
+                    <button type="submit">Eliminar</button>
+                </form>
 
+            <% } %>
+            <% if (user.role === 1 && !isUploader) { %>
+                <form action=<%= `/comic/delete/${comic.comicUploader_id}/${comic.id}` %> id="deleteForm" method="post" hidden>
+                    <h3>¿De verdad quiere borrar este comic?</h3>
+                    <label for="confirmComicDelete">Confirmar con Contraseña:</label><br>
+                    <input type="password" name="confirmComicDelete" id="confirmComicDelete">
+                    <button type="submit">Eliminar</button>
+                </form>
+            <% } %>
         <% } %>
 
         <h2 class="text-center bg-secondary my-2">Capitulos</h2>
@@ -67,14 +90,18 @@
     </div>
 <% } %>
 
-<% if (isUploader) { %>
-    <script>
-        let deleteComic = document.getElementById('deleteComic');
-        let deleteForm = document.getElementById('deleteForm');
-        deleteComic.addEventListener('click',()=>{
-            console.log('ola');
-            deleteForm.toggleAttribute('hidden')
-        })
-    </script>
+<% if (user) { %>
+    <% if (isUploader || user.role === 1) { %>
+        <script>
+            let deleteComic = document.getElementById('deleteComic');
+            let deleteForm = document.getElementById('deleteForm');
+            deleteComic.addEventListener('click',()=>{
+                console.log('ola');
+                deleteForm.toggleAttribute('hidden')
+            })
+        </script>
+    <% } %>
 <% } %>
 
+
+<%- include ('../partials/footer.ejs') %>

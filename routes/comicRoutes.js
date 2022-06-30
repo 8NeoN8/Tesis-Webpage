@@ -149,7 +149,7 @@ router.post('/edit/:uploaderId/:comicId/', isLoggedIn,function(req, res, next){
 //*Done
 router.get('/delete/:uploaderId/:comicId/:chapterId', isLoggedIn,controller.delete_chapter_get)
 //*Done
-router.post('/like/:comicId/:userId',isLoggedIn, controller.likes_post)
+router.post('/like/:comicId/:userId/:hasLiked',isLoggedIn, controller.likes_post)
 
 //TODO
 router.post('/deleteComment/:commentId/',isLoggedIn, controller.deleteComment_post)

@@ -2,33 +2,43 @@
 <%- include ('../partials/message.ejs') %>
 <% if (user) { %>
     <h1>Hola <%= user.name %> </h1>
-    <%- include ('../partials/navLogged.ejs') %>
+    <%- include ('../partials/navLogged.ejs',{user:user}) %>
 <% } else { %>
     <%- include ('../partials/navGuest.ejs') %>
 <% } %>
+<% console.log(amountPages); %>
 
-<section class='mainContainer container'>
-    <div class='container'>
 
-        <img src="<%= chapterPath+'/'+files[currentPage-1] %> " alt="Pagina uno" class='img-fluid d-block mx-auto'>
-        <div class="d-flex">
-            <% if (currentPage <= 1) { %>
-                <a href=<%= nextPage %> class='nav-link disabled' aria-disabled='true'>Previa</a>
-            <% } else {%>
-                <a href=<%= prevPage %> class='nav-link'>Previa</a>
-            <% } %>
+<section class='mainContainer container position-relative'>
+    <div class='container position-relative' id="imgContainer">
+        <img id="mainImg" src="<%= chapterPath+'/'+files[currentPage-1] %> " alt="Pagina uno" class='img-fluid d-block mx-auto position-relative darkmode-ignore'>
+    </div>
+    <div class="options-container d-flex bg-dark text-light position-relative">
 
-            <% if (currentPage >= amountPages) { %>
-                <a href=<%= nextPage %> class='nav-link disabled' aria-disabled='true'>Siguiente</a>
-            <% } else {%>
-                <a href=<%= nextPage %> class='nav-link'>Siguiente</a>
-            <% } %>
+        <% if (!user) { %>
+            <button id="prevBtn"><a id="prevLink" href="#mainImg" class="nav-link disabled" onclick="goToAnchor('mainImg')">Anterior</a></button>
+            <button id="nextBtn"><a id="nextLink" href="#mainImg" class="nav-link disabled" onclick="goToAnchor('mainImg')">Siguiente</a></button>
+        <% } %>
+
+        <% if (user) { %>
+            <button id="prevBtn"><a href="#mainImg" class="nav-link <% if (settings.jumpOnPageTurn !== "imgTop") { %> disabled <% } %>" onclick="goToAnchor('mainImg')">Anterior</a></button>
+            <button id="nextBtn"><a href="#mainImg" class="nav-link <% if (settings.jumpOnPageTurn !== "imgTop") { %> disabled <% } %>" onclick="goToAnchor('mainImg')">Siguiente</a></button>
+        <% } %>
+
+        <div id="goToForm">
+            <label for="goToInput">Saltar a pagina: </label>
+            <input type="number" name="goToInput" id="goToInput" class="w-25" min="1" max=<%= amountPages %>>
+            <button id="goToBtn" class=""><a id="goToLink" href="#mainImg" class="nav-link disabled" onclick="goToAnchor('mainImg')">Ir</a></button>
         </div>
 
+        <a class='nav-link' href=<%= `/read/${comic.id}` %>> Perfil del comic </a>
+        <% if (!user) { %>
+            <button id="openOptions">opciones</button>
+        <% } %>
     </div>
 </section>
 
-<section class="'commentsContainer container my-2">
+<section class="'commentsContainer container my-2" id="comments">
     <% if (user) { %>
         <form class="commentPost" action=<%= Url %> method="post">
             <label for="commentText">Escribe un commentario!</label>
@@ -37,25 +47,683 @@
             <button type="submit">Comentar</button>
         </form>
     <% } else {%>
-        <a href="/login" class="my-2 p-1 bg-dark text-light">Inicia sesion para escribir un commentario</a>
+        <h5 class="text-center my-2 p-1 bg-dark text-light">Inicia sesion para escribir un commentario</h5>
     <% } %>
 
-    <% if (comments) { %>
-        <% for( let i = 0; i < comments.length; i++ ) { %>
-            <div class="my-2 p-2 bg-dark text-light w-50">
-                <h5><%= comments[i].username %> </h5>
-                <p><%= comments[i].commentText %> </p>
-                <div class="comment-options d-flex">
-                    <% if (user && (comments[i].user_id === user.id)) { %>
-                        <form action=<%= `/comic/deleteComment/${comments[i].id}`%>  method="post">
-                            <button class="p-1" type="submit">Eliminar comentario</button>
-                        </form>
-                    <% } %>
+    <% if (comments.length > 0) { %>
+        <button id="toggleComments" class="p-1 btn-primary">Comentarios</button>
+        <div class="comment-container" id="comment-container" hidden>
+            <% for( let i = 0; i < comments.length; i++ ) { %>
+                <div class="my-2 p-2 bg-dark text-light w-50">
+                    <h5><%= comments[i].username %> </h5>
+                    <p><%= comments[i].commentText %> </p>
+                    <div class="comment-options d-flex">
+                        <% if (user && (comments[i].user_id === user[0].id || user.role === 1)) { %>
+                            <form action=<%= `/comic/deleteComment/${comments[i].id}`%>  method="post">
+                                <button class="p-1" type="submit">Eliminar comentario</button>
+                            </form>
+                        <% } %>
+                    </div>
                 </div>
-            </div>
-        <% } %>
+            <% } %>
+        </div>
     <% } %>
-
 </section>
+
+<% if (comments.length > 0) { %>
+    <script>
+        let toggleComments = document.getElementById('toggleComments');
+        let commentContainer = document.getElementById('comment-container');
+
+        toggleComments.addEventListener('click',()=>{
+            commentContainer.toggleAttribute('hidden');
+        })
+
+    </script>
+<% } %>
+
+<script>
+
+    let imgContainer = document.getElementById('imgContainer')
+    let mainImg = document.getElementById('mainImg')
+    let currentPage = '<%= currentPage %>';
+    let amountPages = '<%= amountPages %>';
+    let prevPage = '<%= prevPage %>';
+    let nextPage = '<%= nextPage %>';
+    let temp;
+    let goToForm = document.getElementById('goToForm')
+    let goToInput = document.getElementById('goToInput')
+    let goToBtn = document.getElementById('goToBtn')
+
+    let imgBtnPrev = document.createElement('button')
+    let imgBtnNext = document.createElement('button')
+
+    goToBtn.addEventListener('click',()=>{
+        if(goToInput.value >=1 && goToInput.value <= amountPages){
+            currentPage = goToInput.value;
+
+            history.replaceState('', '', currentPage);
+
+            temp = nextPage.split('/')
+            temp[temp.length-1] = (currentPage+1)
+            nextPage = temp.join('/')
+
+            temp = prevPage.split('/')
+            temp[temp.length-1] = (currentPage-1)
+            prevPage = temp.join('/')
+
+            temp = mainImg.src.split('.');
+            temp[0] = temp[0].slice(0, -1) + currentPage
+            mainImg.src = temp.join('.');
+
+            if(parseInt(currentPage) === 1){
+                if(!prevBtn.hasAttribute('disabled')){
+                    prevBtn.toggleAttribute('disabled');
+                    imgBtnPrev.toggleAttribute('disabled');
+                }
+                if(nextBtn.hasAttribute('disabled')){
+                    nextBtn.toggleAttribute('disabled');
+                    imgBtnNext.toggleAttribute('disabled');
+                }
+            }
+            if(parseInt(currentPage) === parseInt(amountPages)){
+                if(!nextBtn.hasAttribute('disabled')){
+                    nextBtn.toggleAttribute('disabled');
+                    imgBtnNext.toggleAttribute('disabled');
+                }
+                if(prevBtn.hasAttribute('disabled')){
+                    prevBtn.toggleAttribute('disabled');
+                    imgBtnPrev.toggleAttribute('disabled');
+                }
+            }
+            if(parseInt(currentPage) !== parseInt(amountPages) && parseInt(currentPage) !== 1){
+                if(nextBtn.hasAttribute('disabled')){
+                    nextBtn.toggleAttribute('disabled');
+                    imgBtnNext.toggleAttribute('disabled');
+                }
+                if(prevBtn.hasAttribute('disabled')){
+                    prevBtn.toggleAttribute('disabled');
+                    imgBtnPrev.toggleAttribute('disabled');
+                }
+            }
+            goToInput.value =""
+        }
+    })
+
+    let prevBtn = document.getElementById('prevBtn');
+    prevBtn.addEventListener('click',()=>{
+        history.replaceState('', '', prevPage);
+        if(currentPage > 0){
+            currentPage--
+            if(currentPage === 0){
+                currentPage == 1
+            }
+            if(currentPage === 1){
+                prevBtn.toggleAttribute('disabled')
+            }
+            if(currentPage > 1){
+                temp = prevPage.split('/')
+                temp[temp.length-1] = (currentPage-1)
+                prevPage = temp.join('/')
+            }else{
+                temp = prevPage.split('/')
+                temp[temp.length-1] = (currentPage)
+                prevPage = temp.join('/')
+            }
+            if(nextBtn.hasAttribute('disabled')){
+                nextBtn.removeAttribute('disabled')
+            }
+
+            temp = nextPage.split('/')
+            temp[temp.length-1] = (currentPage+1)
+            nextPage = temp.join('/')
+
+
+            temp = mainImg.src.split('.');
+            temp[0] = temp[0].slice(0, -1) + currentPage
+            mainImg.src = temp.join('.');
+        }
+    })
+
+    let nextBtn = document.getElementById('nextBtn');
+    nextBtn.addEventListener('click',()=>{
+        history.replaceState('', '', nextPage);
+        if(currentPage < amountPages){
+            currentPage++
+            if(currentPage > 1){
+                if(prevBtn.hasAttribute('disabled')){
+                    prevBtn.removeAttribute('disabled')
+                }
+            }
+            temp = nextPage.split('/')
+            temp[temp.length-1] = (currentPage+1)
+            nextPage = temp.join('/')
+
+            temp = prevPage.split('/')
+            temp[temp.length-1] = (currentPage-1)
+            prevPage = temp.join('/')
+
+            if(currentPage >= amountPages){
+                temp = nextPage.split('/')
+                temp[temp.length-1] = (currentPage)
+                nextPage = temp.join('/')
+                nextBtn.toggleAttribute('disabled')
+            }
+
+            temp = mainImg.src.split('.');
+            temp[0] = temp[0].slice(0, -1) + currentPage
+            mainImg.src = temp.join('.');
+        }
+    })
+
+    if(parseInt(currentPage) === 1){
+        if(!prevBtn.hasAttribute('disabled')){
+            prevBtn.toggleAttribute('disabled');
+            imgBtnPrev.toggleAttribute('disabled');
+        }
+    }
+    if(parseInt(currentPage) === parseInt(amountPages)){
+        if(!nextBtn.hasAttribute('disabled')){
+            nextBtn.toggleAttribute('disabled');
+            imgBtnNext.toggleAttribute('disabled');
+        }
+    }
+
+    function goToAnchor(anchor) {
+        var loc = document.location.toString().split('#')[0];
+        document.location = loc + '#' + anchor;
+        return false;
+    }
+
+    //botones en la imagen
+
+    let prevLink = document.getElementById('prevLink');
+    let nextLink = document.getElementById('nextLink');
+    let goToLink = document.getElementById('goToLink')
+
+    imgBtnPrev.setAttribute("id","imgBtnPrev")
+    imgBtnNext.setAttribute("id","imgBtnNext")
+
+    imgBtnPrev.style.opacity = 0
+    imgBtnNext.style.opacity = 0
+
+    imgBtnPrev.style.zIndex = 3
+    imgBtnNext.style.zIndex = 3
+
+    imgBtnPrev.classList.add('position-absolute')
+    imgBtnNext.classList.add('position-absolute')
+
+    imgBtnPrev.addEventListener('click',()=>{
+        history.replaceState('', '', prevPage);
+        imgBtnNext.removeAttribute('disabled');
+        nextBtn.removeAttribute('disabled');
+        if(currentPage > 0){
+            currentPage--
+            if(currentPage === 1){
+                imgBtnPrev.toggleAttribute('disabled')
+                prevBtn.toggleAttribute('disabled')
+            }
+            if(currentPage > 1){
+                temp = prevPage.split('/')
+                temp[temp.length-1] = (currentPage-1)
+                prevPage = temp.join('/')
+
+            }else{
+                temp = prevPage.split('/')
+                temp[temp.length-1] = (currentPage)
+                prevPage = temp.join('/')
+            }
+
+            temp = nextPage.split('/')
+            temp[temp.length-1] = (currentPage+1)
+            nextPage = temp.join('/')
+
+
+            temp = mainImg.src.split('.');
+            temp[0] = temp[0].slice(0, -1) + currentPage
+            mainImg.src = temp.join('.');
+        }
+    })
+
+    imgBtnNext.addEventListener('click',()=>{
+        console.log(nextPage);
+        history.replaceState('', '', nextPage);
+        imgBtnPrev.removeAttribute('disabled');
+        prevBtn.removeAttribute('disabled');
+        if(currentPage < amountPages){
+            currentPage++
+            console.log(currentPage);
+            temp = nextPage.split('/')
+            temp[temp.length-1] = (currentPage+1)
+            nextPage = temp.join('/')
+
+            temp = prevPage.split('/')
+            temp[temp.length-1] = (currentPage-1)
+            prevPage = temp.join('/')
+
+            if(currentPage >= amountPages){
+                temp = nextPage.split('/')
+                temp[temp.length-1] = (currentPage)
+                nextPage = temp.join('/')
+                imgBtnNext.toggleAttribute('disabled')
+                nextBtn.toggleAttribute('disabled')
+            }
+
+            temp = mainImg.src.split('.');
+            temp[0] = temp[0].slice(0, -1) + currentPage
+            mainImg.src = temp.join('.');
+        }
+    })
+    imgContainer.appendChild(imgBtnPrev)
+    imgContainer.appendChild(imgBtnNext)
+
+    imgBtnPrev = document.getElementById('imgBtnPrev')
+    imgBtnNext = document.getElementById('imgBtnNext')
+
+    let imgLinkPrev = document.createElement('a');
+    imgLinkPrev.classList.add('nav-link');
+    imgLinkPrev.classList.add('disabled');
+    imgLinkPrev.setAttribute("id","imgLinkPrev");
+    imgLinkPrev.setAttribute("href","#mainImg");
+    imgLinkPrev.setAttribute("onclick","goToAnchor('mainImg')")
+    imgLinkPrev.innerText = " ";
+    imgLinkPrev.setAttribute('style',`display: block; height: ${mainImg.clientHeight}px; z-index:3`);
+    imgBtnPrev.appendChild(imgLinkPrev)
+
+    let imgLinkNext = document.createElement('a')
+    imgLinkNext.classList.add('nav-link');
+    imgLinkNext.classList.add('disabled');
+    imgLinkNext.classList.add('d-block');
+    imgLinkNext.setAttribute("id","imgLinkNext");
+    imgLinkNext.setAttribute("href","#mainImg");
+    imgLinkNext.setAttribute("onclick","goToAnchor('mainImg')")
+    imgLinkNext.innerText = " ";
+    imgLinkNext.setAttribute('style',`display: block; height: ${mainImg.clientHeight}px; z-index:3`);
+    imgBtnNext.appendChild(imgLinkNext);
+
+    imgLinkPrev = document.getElementById('imgLinkPrev')
+    imgLinkNext = document.getElementById('imgLinkNext')
+
+    let filterColor;
+    let filter = document.createElement('div');
+
+</script>
+
+<% if (!user) { %>
+    <script>
+        imgBtnPrev.style.height = `${mainImg.clientHeight}px`
+        imgBtnPrev.style.width = `${mainImg.clientWidth/2}px`
+        imgBtnNext.style.height = `${mainImg.clientHeight}px`
+        imgBtnNext.style.width = `${mainImg.clientWidth/2}px`
+
+        imgBtnPrev.style.opacity = 0
+        imgBtnNext.style.opacity = 0
+
+        imgBtnPrev.classList.add('position-absolute')
+        imgBtnNext.classList.add('position-absolute')
+        imgBtnPrev.classList.add('translate-middle-y')
+        imgBtnNext.classList.add('translate-middle-y')
+        imgBtnNext.classList.add('top-50')
+        imgBtnNext.classList.add('end-0')
+        imgBtnPrev.classList.add('top-50')
+        imgBtnPrev.classList.add('start-0')
+
+        mainImg.addEventListener('load',()=>{
+            if(pageTurn.value === "lr" || pageTurn.value === "rl"){
+                imgBtnPrev.style.height = `${mainImg.clientHeight}px`
+                imgBtnPrev.style.width = `${mainImg.clientWidth/2}px`
+                imgBtnNext.style.height = `${mainImg.clientHeight}px`
+                imgBtnNext.style.width = `${mainImg.clientWidth/2}px`
+
+                imgLinkPrev.style.height = `${mainImg.clientHeight}px`
+                imgLinkPrev.style.width = `${mainImg.clientWidth/2}px`
+                imgLinkNext.style.height = `${mainImg.clientHeight}px`
+                imgLinkNext.style.width = `${mainImg.clientWidth/2}px`
+            }
+
+            if(pageTurn.value === "ud" || pageTurn.value === "du"){
+                imgBtnPrev.style.height = `${mainImg.clientHeight/2}px`
+                imgBtnPrev.style.width = `${mainImg.clientWidth}px`
+                imgBtnNext.style.height = `${mainImg.clientHeight/2}px`
+                imgBtnNext.style.width = `${mainImg.clientWidth}px`
+
+                imgLinkPrev.style.height = `${mainImg.clientHeight/2}px`
+                imgLinkPrev.style.width = `${mainImg.clientWidth}px`
+                imgLinkNext.style.height = `${mainImg.clientHeight/2}px`
+                imgLinkNext.style.width = `${mainImg.clientWidth}px`
+            }
+        })
+    </script>
+<% } %>
+
+<% if (user) { %>
+    <script>
+        imgBtnPrev.style.height = `${mainImg.clientHeight}px`
+        imgBtnPrev.style.width = `${mainImg.clientWidth/2}px`
+        imgBtnNext.style.height = `${mainImg.clientHeight}px`
+        imgBtnNext.style.width = `${mainImg.clientWidth/2}px`
+
+        imgBtnPrev.classList.add('translate-middle-y')
+        imgBtnNext.classList.add('translate-middle-y')
+        imgBtnNext.classList.add('top-50')
+        imgBtnNext.classList.add('end-0')
+        imgBtnPrev.classList.add('top-50')
+        imgBtnPrev.classList.add('start-0')
+
+        imgBtnPrev.style.zIndex = 3
+        imgBtnNext.style.zIndex = 3
+        imgLinkPrev.style.zIndex = 3
+        imgLinkNext.style.zIndex = 3
+
+        mainImg.addEventListener('load',()=>{
+            if('<%= settings.pageTurnDirection %>' === "lr" || '<%= settings.pageTurnDirection %>' === "rl"){
+                imgBtnPrev.style.height = `${mainImg.clientHeight}px`
+                imgBtnPrev.style.width = `${mainImg.clientWidth/2}px`
+                imgBtnNext.style.height = `${mainImg.clientHeight}px`
+                imgBtnNext.style.width = `${mainImg.clientWidth/2}px`
+
+                imgLinkPrev.style.height = `${mainImg.clientHeight}px`
+                imgLinkPrev.style.width = `${mainImg.clientWidth/2}px`
+                imgLinkNext.style.height = `${mainImg.clientHeight}px`
+                imgLinkNext.style.width = `${mainImg.clientWidth/2}px`
+            }
+
+            if('<%= settings.pageTurnDirection %>' === "ud" || '<%= settings.pageTurnDirection %>' === "du"){
+                imgBtnPrev.style.height = `${mainImg.clientHeight/2}px`
+                imgBtnPrev.style.width = `${mainImg.clientWidth}px`
+                imgBtnNext.style.height = `${mainImg.clientHeight/2}px`
+                imgBtnNext.style.width = `${mainImg.clientWidth}px`
+
+                imgLinkPrev.style.height = `${mainImg.clientHeight/2}px`
+                imgLinkPrev.style.width = `${mainImg.clientWidth}px`
+                imgLinkNext.style.height = `${mainImg.clientHeight/2}px`
+                imgLinkNext.style.width = `${mainImg.clientWidth}px`
+            }
+
+            if('<%= settings.pageTurnDirection %>' === "lr"){
+                imgBtnPrev.classList.remove('end-0')
+                imgBtnNext.classList.remove('start-0')
+                imgBtnPrev.classList.add('start-0')
+                imgBtnNext.classList.add('end-0')
+            }
+            if('<%= settings.pageTurnDirection %>' === "rl"){
+                imgBtnPrev.classList.remove('start-0')
+                imgBtnNext.classList.remove('end-0')
+                imgBtnPrev.classList.add('end-0')
+                imgBtnNext.classList.add('start-0')
+            }
+
+            if('<%= settings.pageTurnDirection %>' === "ud"){
+                imgBtnPrev.classList.add('top-0')
+                imgBtnPrev.classList.remove('top-50')
+
+                imgBtnNext.classList.add('top-50')
+                imgBtnNext.classList.remove('top-0')
+            }
+            if('<%= settings.pageTurnDirection %>' === "du"){
+                imgBtnNext.classList.add('top-0')
+                imgBtnNext.classList.remove('top-50')
+
+                imgBtnPrev.classList.add('top-50')
+                imgBtnPrev.classList.remove('top-0')
+            }
+            if('<%= settings.filterOnOff %>' === "on"){
+                filterColor = '<%= settings.colorFilter %>'
+                console.log(filterColor);
+                filter.style=`width: ${mainImg.clientWidth}px; height: ${mainImg.clientHeight}px; position: absolute; opacity: 0.3; background-color: ${filterColor}; z-index: 2; top:0; left:${(mainImg.offsetLeft)}px`
+                imgContainer.appendChild(filter);
+            }
+
+            window.addEventListener('resize',()=>{
+                if('<%= settings.filterOnOff %>' === "on"){
+                    imgContainer.removeChild(filter);
+                    filter.style=`width: ${mainImg.clientWidth}px; height: ${mainImg.clientHeight}px; position: absolute; opacity: 0.3; background-color: ${filterColor}; z-index: 2; top:0; left:${(mainImg.offsetLeft)}px`
+                    imgContainer.appendChild(filter);
+                }
+            })
+
+        })
+
+    </script>
+<% } %>
+
+<% if (!user) { %>
+    <form class="container bg-dark text-light" action="" method="post" id="optionsForm" hidden>
+        <h4>Opciones de Comic</h4>
+
+        <label for="pageTurn">Direccion de cambio de imagen (lugar de la imagen para cambiar de paginas)</label>
+        <select name="pageTurn" id="pageTurn">
+            <option value="lr"> izquierda-Derecha </option>
+            <option value="rl">Derecha-Izquierda</option>
+            <option value="ud">Arriba-Abajo</option>
+            <option value="du">Abajo-Arriba</option>
+        </select>
+        <br>
+        <br>
+
+        <label for="jumpPage">Saltar al cambiar de pagina</label>
+        <select name="jumpPage" id="jumpPage">
+            <option value="nojump" selected>No Saltar</option>
+            <option value="imgTop">Tope de imagen</option>
+        </select>
+        <br>
+        <br>
+
+        <div class="colorfilter">
+            <label for="colorFilter">Filtros</label>
+            <select name="colorFilter" id="colorFilter">
+                <option value="#ffae00">Naranja</option>
+                <option value="#00d9ff">Celeste</option>
+                <option value="#000000">Negro</option>
+                <option value="#a1723b">Marron</option>
+                <option value="custom">Personalizado</option>
+            </select>
+            <br>
+            <div class="customColor" id="customDiv" hidden>
+                <label for="customColor">ColorPersonalizado</label>
+                <input type="color" name="customColor" id="customColor" value="#ffffff">
+            </div>
+            <br>
+            <label for="filterOnOf">Aplicar filtro?</label>
+            <label for="filterOn">Si</label>
+            <input type="radio" name="filterOnOff" id="filterOn" value="on">
+            <label for="filterOff">No</label>
+            <input type="radio" name="filterOnOff" id="filterOff" value="off" checked="checked">
+        </div>
+        <br>
+    </form>
+<% } %>
+
+<% if (!user) { %>
+    <script>
+        let openOptions = document.getElementById('openOptions');
+        let optionsForm = document.getElementById('optionsForm');
+
+        openOptions.addEventListener('click',() => {
+                optionsForm.toggleAttribute('hidden')
+            }
+        )
+
+        let jumpPage = document.getElementById('jumpPage')
+        let colorFilter = document.getElementById('colorFilter')
+        let customColor = document.getElementById('customColor')
+        let filterOn = document.getElementById('filterOn')
+        let filterOff = document.getElementById('filterOff')
+        let customDiv = document.getElementById('customDiv')
+
+        pageTurn.addEventListener('change',()=>{
+            console.log('alo');
+
+            let imgBtnPrev = document.getElementById('imgBtnPrev')
+            let imgBtnNext = document.getElementById('imgBtnNext')
+
+            if(pageTurn.value === "lr" || pageTurn.value === "rl"){
+                imgBtnPrev.style.height = `${mainImg.clientHeight}px`
+                imgBtnPrev.style.width = `${mainImg.clientWidth/2}px`
+                imgBtnNext.style.height = `${mainImg.clientHeight}px`
+                imgBtnNext.style.width = `${mainImg.clientWidth/2}px`
+                imgBtnPrev.style.zIndex = 3
+                imgBtnNext.style.zIndex = 3
+
+                imgLinkPrev.style.height = `${mainImg.clientHeight}px`
+                imgLinkPrev.style.width = `${mainImg.clientWidth/2}px`
+                imgLinkNext.style.height = `${mainImg.clientHeight}px`
+                imgLinkNext.style.width = `${mainImg.clientWidth/2}px`
+                imgLinkPrev.style.zIndex = 3
+                imgLinkNext.style.zIndex = 3
+
+                imgBtnPrev.classList.remove('translate-middle-x')
+                imgBtnNext.classList.remove('translate-middle-x')
+                imgBtnPrev.classList.add('translate-middle-y')
+                imgBtnNext.classList.add('translate-middle-y')
+                imgBtnPrev.classList.remove('start-50')
+                imgBtnNext.classList.remove('start-50')
+                imgBtnNext.classList.add('top-50')
+                imgBtnPrev.classList.add('top-50')
+            }
+            if(pageTurn.value === "ud" || pageTurn.value === "du"){
+                imgBtnPrev.style.height = `${mainImg.clientHeight/2}px`
+                imgBtnPrev.style.width = `${mainImg.clientWidth}px`
+                imgBtnNext.style.height = `${mainImg.clientHeight/2}px`
+                imgBtnNext.style.width = `${mainImg.clientWidth}px`
+
+                imgLinkPrev.style.height = `${mainImg.clientHeight/2}px`
+                imgLinkPrev.style.width = `${mainImg.clientWidth}px`
+                imgLinkNext.style.height = `${mainImg.clientHeight/2}px`
+                imgLinkNext.style.width = `${mainImg.clientWidth}px`
+
+                imgBtnNext.classList.remove('translate-middle-y')
+                imgBtnPrev.classList.remove('translate-middle-y')
+                imgBtnPrev.classList.add('translate-middle-x')
+                imgBtnNext.classList.add('translate-middle-x')
+                imgBtnNext.classList.remove('top-50')
+                imgBtnPrev.classList.remove('top-50')
+                imgBtnPrev.classList.add('start-50')
+                imgBtnNext.classList.add('start-50')
+            }
+
+            imgBtnPrev.style.position = `absolute`
+            imgBtnNext.style.position = `absolute`
+            imgBtnPrev.style.opacity = 0.1
+            imgBtnNext.style.opacity = 0.1
+
+            if(pageTurn.value === "lr"){
+                imgBtnPrev.classList.remove('end-0')
+                imgBtnNext.classList.remove('start-0')
+                imgBtnPrev.classList.add('start-0')
+                imgBtnNext.classList.add('end-0')
+            }
+            if(pageTurn.value === "rl"){
+                imgBtnPrev.classList.remove('start-0')
+                imgBtnNext.classList.remove('end-0')
+                imgBtnPrev.classList.add('end-0')
+                imgBtnNext.classList.add('start-0')
+            }
+
+            if(pageTurn.value === "ud"){
+                imgBtnPrev.classList.add('top-0')
+                imgBtnPrev.classList.remove('top-50')
+
+                imgBtnNext.classList.add('top-50')
+                imgBtnNext.classList.remove('top-0')
+            }
+            if(pageTurn.value === "du"){
+                imgBtnNext.classList.add('top-0')
+                imgBtnNext.classList.remove('top-50')
+
+                imgBtnPrev.classList.add('top-50')
+                imgBtnPrev.classList.remove('top-0')
+            }
+
+            imgContainer.appendChild(imgBtnPrev);
+            imgContainer.appendChild(imgBtnNext)
+        })
+
+        filterColor = colorFilter.value;
+
+        colorFilter.addEventListener('change', () => {
+            console.log(colorFilter.value);
+
+            if(colorFilter.value === "custom"){
+                customDiv.toggleAttribute('hidden');
+            }else{
+                if(!customDiv.hasAttribute('hidden')){
+                    customDiv.toggleAttribute('hidden');
+                }
+                if(colorFilter.value !== "-" && colorFilter.value !== "custom"){
+                    filterColor = colorFilter.value
+                    console.log('filterColor :>> ', filterColor);
+                }else filterColor = ""
+            }
+            if(filterOn.checked){
+                imgContainer.removeChild(filter);
+                filter.style=`width: ${mainImg.clientWidth}px; height: ${mainImg.clientHeight}px; position: absolute; opacity: 0.3; background-color: ${filterColor}; z-index: 100; top:0; left:${(mainImg.offsetLeft)}px`
+                imgContainer.appendChild(filter);
+            }
+        })
+        customColor.addEventListener('change',()=>{
+            filterColor = customColor.value;
+            console.log('filterColor :>> ', filterColor);
+            if(filterOn.checked){
+                imgContainer.removeChild(filter);
+                filter.style=`width: ${mainImg.clientWidth}px; height: ${mainImg.clientHeight}px; position: absolute; opacity: 0.3; background-color: ${filterColor}; z-index: 100; top:0; left:${(mainImg.offsetLeft)}px`
+                imgContainer.appendChild(filter);
+            }
+        })
+
+        filterOn.addEventListener('change', () => {
+            if(filterOn.checked){
+                filter.style=`width: ${mainImg.clientWidth}px; height: ${mainImg.clientHeight}px; position: absolute; opacity: 0.3; background-color: ${filterColor}; z-index: 100; top:0; left:${(mainImg.offsetLeft)}px`
+                imgContainer.appendChild(filter);
+            }
+        })
+        filterOff.addEventListener('change', () => {
+            if(filterOff.checked){
+                imgContainer.removeChild(filter);
+            }
+        })
+
+        window.addEventListener('resize',()=>{
+            if(filterOn.checked){
+                imgContainer.removeChild(filter);
+                filter.style=`width: ${mainImg.clientWidth}px; height: ${mainImg.clientHeight}px; position: absolute; opacity: 0.3; background-color: ${filterColor}; z-index: 100; top:0; left:${(mainImg.offsetLeft)}px`
+                imgContainer.appendChild(filter);
+            }
+        })
+
+        mainImg.addEventListener('load',()=>{
+            if(filterOn.checked){
+                imgContainer.removeChild(filter);
+                filter.style=`width: ${mainImg.clientWidth}px; height: ${mainImg.clientHeight}px; position: absolute; opacity: 0.3; background-color: ${filterColor}; z-index: 100; top:0; left:${(mainImg.offsetLeft)}px`
+                imgContainer.appendChild(filter);
+            }
+        })
+
+        jumpPage.addEventListener('change',()=>{
+
+            if(jumpPage.value !== "imgTop"){
+                if(!prevLink.classList.contains('disabled')){
+                    prevLink.classList.add('disabled');
+                    imgLinkPrev.classList.add('disabled');
+                }
+                if(!nextLink.classList.contains('disabled')){
+                    nextLink.classList.add('disabled');
+                    imgLinkNext.classList.add('disabled');
+                }
+                if(!goToLink.classList.contains('disabled')){
+                    goToLink.classList.add('disabled');
+                }
+            }else{
+                prevLink.classList.remove('disabled');
+                nextLink.classList.remove('disabled');
+                goToLink.classList.remove('disabled');
+                imgLinkPrev.classList.remove('disabled');
+                imgLinkNext.classList.remove('disabled');
+            }
+        })
+
+    </script>
+<% } %>
+
 
 <%- include ('../partials/footer.ejs') %>
