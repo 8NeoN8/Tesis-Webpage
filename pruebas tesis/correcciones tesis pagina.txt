@@ -1,0 +1,10 @@
+read section is like 20% done
+-pinchzoomjs for pinch zoom on read
+-light filters (user options, doesn´t go here)
+-add report option for issues in general with a comic
+
+Main page
+-add modals for these comics
+-upload at least 10 comics to fill
+
+admin pages

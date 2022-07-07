@@ -8,35 +8,36 @@ const { nextTick } = require('process');
 const helpers = require('../lib/helpers')
 
 const create_get = async (req, res) => {
-    res.render('comic/create', {title: 'Create Comic Entry', success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
+    let user; if (await req.user) {
+        await req.user.then( e => {user = e[0].dataValues} );
+        console.log('user en /create get:>> ', user);
+    }
+    res.render('comic/create', {title: 'Create Comic Entry',user:user, success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
 }
 
 const create_post =  async (req, res) => {
-    console.log('entro');
-    console.log(req.body.comicName);
+
     try {
-        let user;
-        await req.user.then(e => {
-            user = e[0];
-        })
-        console.log(user.dataValues.id,"el primero id");
+        //Primero se obitne el usuario para usar sus datos al guardar
+        let user; if (await req.user) {
+            await req.user.then( e => {user = e[0].dataValues} );
+            console.log('user en /create post:>> ', user);
+        }
 
         //Aqui se crea la fecha actual para asignar como valor por defecto de la fecha de inicio si el usuario no elige una
         let today = new Date();
         let dd = String(today.getDate()).padStart(2, '0');
         let mm = String(today.getMonth() + 1).padStart(2, '0');
         let yyyy = today.getFullYear();
-
         today = mm + '/' + dd + '/' + yyyy;
 
-        //Verificando si el usuario es el autor del comic
-        let writer;
+        //Verificando si el usuario ingreso un autor para el comic, sino se toma al usuario como autor
+        let writer = user.dataValues.username;
         if (req.body.comicWriter) {
             writer = req.body.comicWriter
-            console.log(writer);
-        }else writer = user.dataValues.username
+        }
 
-        //Eliminando espacios en el nombre del autor si los hay
+        //Eliminando espacios en el nombre del autor si los hay para evitar problemas de lectura con el programa
         if(writer.includes(" ")){
             writer = writer.replaceAll(" ","-")
         }
@@ -65,7 +66,7 @@ const create_post =  async (req, res) => {
             startDate = req.body.comicStart;
         }
 
-        //Obteniendo la direccion del la portada para guardar y usar posteriormente
+        //Obteniendo la direccion de la portada para guardar y usar posteriormente
         let fileName;
         let coverPath;
         let tmpPath = './public/uploads/'+comicName
@@ -79,7 +80,6 @@ const create_post =  async (req, res) => {
             }
         }
         coverPath = '/uploads/'+comicName+'/'+fileName;
-        console.log('coverPath :>> ', coverPath);
 
         //Creando y guardando el registro del comic
         const comic = await models.ComicEntry.create({
@@ -93,19 +93,17 @@ const create_post =  async (req, res) => {
             comicCategories:req.body.selectedCats,
             comicStart: startDate
         })
-        .then(req.flash('success','El comic se aregistrado exitosamente'))
-        .then(res.redirect('../'))
-        console.log(JSON.stringify(comic))
+        req.flash('success','El comic se ha registrado exitosamente')
+        res.redirect(`../read/${comic.id}`);
 
     } catch (err) {
-        req.flash('error','Error. No se pudo crear el comic, intentelo de nuevo')
         console.log(err);
-        res.redirect('../comic/create')
+        req.flash('error','Error. No se pudo crear el comic, intentelo de nuevo')
+        res.redirect('back')
 
-        //Si hubo un problema se elimina la carpeta del comic para permitir un nuevo intento
+        //Si hubo un problema se elimina la carpeta del comic creada anteriormente para permitir un nuevo intento
+        let path = './public/uploads/'+req.body.comicName
         try {
-            let path = './public/uploads/'+req.body.comicName
-
             function deleteFolderRecursive(path) {
               if( fs.existsSync(path) ) {
                   fs.readdirSync(path).forEach(function(file) {
@@ -122,89 +120,99 @@ const create_post =  async (req, res) => {
             deleteFolderRecursive(path);
         } catch (error) {
             console.log(error);
+            req.flash('error',`Error. No se pudo eliminar la carpeta ${path}`)
+            res.redirect('back')
         }
-
     }
 }
 
 const upload_get = async (req, res) => {
-    let params = await req.params
-    let user = await req.user
-    let comicSelected = [];
-    let comics = [];
+    let user; if (await req.user) {
+        await req.user.then( e => {user = e[0].dataValues} );
+        console.log('user en /upload get:>> ', user);
+    }
 
+
+    //si se ha elegido un comic a subir capitulo se toma los parametros enviados
+    let params
+    let comicId
+    let uploaderId
+    if (await req.params) {
+        params = req.params
+        comicId = req.params.comicId
+        uploaderId = req.params.uploaderId
+    }
+
+    console.log('params :>> ', req.params);
+
+    let comicSelected = [];
+
+    //Se busca en la bdd los comics que hayan sido subidos por el usuario para dar a elegir a cual subir un capitulo
     const uploaderComics = await models.ComicEntry.findAll({
         where: {
-            comicUploader_id: user[0].dataValues.id,
+            comicUploader_id: user.id,
         }
     })
+
+    let comics = [];
 
     for (let i = 0; i <= uploaderComics.length-1; i++) {
         comics[i] = uploaderComics[i].dataValues
     }
 
+    //Si uno a sido seleccionado y fueron encontrado parametros se muestra la pagina de subida de capitulo
     if (await req.params) {
-        if(Object.keys(params).length > 0){
-            comicSelected = await models.ComicEntry.findAll({
-                where:{
-                    comicName: params.comicName
-                }
-            })
-            if (comicSelected.length > 0) {
-                res.render('comic/chooseComic', {title: 'Upload Comic Chapter',params:params, user:user, comics:comics, comicSelected:comicSelected, success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
-            }else{
-                res.redirect('../')
-            }
-        }else{
-            res.render('comic/chooseComic', {title: 'Upload Comic Chapter',params:params,user:user, comics:comics, comicSelected: comicSelected, success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
-        }
-    } else res.render('comic/chooseComic', {title: 'Upload Comic Chapter',params:params,user:user, comics:comics, comicSelected: comicSelected, success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
-
+        comicSelected = await models.ComicEntry.findByPk(comicId)
+    }
+    //Si no se ha elegido uno, en otras palabras, se esta cargando por primera vez la vista, se muestran los comics del usuario
+    //Para que eliga a cual subir un capitulo
+    res.render('comic/chooseComic', {title: 'Subir un Capitulo',params:params, user:user, comics:comics, comicSelected: comicSelected, success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
 
 }
 
 const upload_post = async (req, res) => {
+    //Una vez enviado el archivo y la informacion del capitulo
     try {
-        let user;
-        await req.user.then(e => {
-            user = e[0];
-        })
-        let params  = req.params;
+        let user; if (await req.user) {
+            await req.user.then( e => {user = e[0].dataValues} );
+            console.log('user en /upload post:>> ', user);
+        }
+        let params; if(await req.params) {
+            params = req.params;
+        }
         let fileName;
         let bodynumber = req.body.numberChapter;
+
+        //Se indica la direccion del archivo del capitulo y se verifica que tenga una extension valida
         let dirPath = './public/uploads/'+params.comicName+'/capitulo-'+bodynumber;
-
         const files = fs.readdirSync(dirPath);
-        console.log(path.extname(files[0]),' del array');
-
 
         for (const file of files) {
 
             let filePath = dirPath+'/'+path.basename(file);
 
             if (path.extname(file) !== ".zip" && path.extname(file) !== ".7z") {
-                console.log("dentro del if");
                 try {
-                    fs.unlinkSync(filePath).then(console.log("se borro por ser invalido"));
+                    //Si no es valido el archivo se elimina al igual que el directorio por seguridad
+                    fs.unlinkSync(filePath).then(console.log("No era un archivo valido, se a borrado por seguridad"));
                     fs.rmdirSync(dirPath)
-                    req.flash('error','El archivo que se subio no es .zip o .7z');
-                    res.redirect('../'+params.comicUploader+'/'+params.comicName);
+                    req.flash('error','El archivo que se subio no es .zip o .7z, intentelo de nuevo');
+                    res.redirect('back');
                 } catch (err) {
                     console.log(err);
                     req.flash('error','Ocurrio un problema tratando de borrar el archivo invalido');
-                    res.redirect('../'+params.comicUploader+'/'+params.comicName);
+                    res.redirect('back');
                     break;
                 }
             }
 
+            //Si el archivo es valido se intenta descomprimir las imagenes
             fileName = path.basename(file);
-            console.log(fileName,' en el for');
 
-
+            //Se define exactamente la direccion del archivo a descomprimir
             const zipfile = './public/uploads/'+params.comicName+'/capitulo-'+bodynumber+'/'+fileName;
 
-            console.log('zipfile :>> ', zipfile);
-
+            //haciendo uso del modulo Node Stream Zip se descomprime el archivo
             const zip = new StreamZip.async({file: zipfile})
 
             const count = await zip.extract(null,`./public/uploads/${params.comicName}/capitulo-${bodynumber}`)
@@ -212,47 +220,50 @@ const upload_post = async (req, res) => {
             zip.on('entry', entry => {
                 console.log(`Read entry ${entry.name}`);
             });
-
             await zip.close();
+
+            //Una vez se han extraido los archivos se elimina el paquete comprimido
             fs.unlinkSync(zipfile);
         };
 
+        //Posteriormente se verifica que los archivos extraidos sean validos
         const allPages = fs.readdirSync(dirPath);
-        console.log(allPages);
 
         for (const page of allPages) {
+            //Esto revisa cada uno de los archivos extraidos
             if (path.extname(page) !== '.jpg' && path.extname(page) !== '.png' && path.extname(page) !== '.jpeg') {
+                //Si uno solo de los archivos no es valido se eliminan todos por seguridad y se devuelve un error
                 for (const page of allPages) {
                     fs.unlinkSync(page)
                 }
                 fs.rmdirSync(chapterPages)
-                req.flash('error','Oops, parece que subiste imagenes con formatos diferentes a los permitidos: jpeg, jpg, png. Por favor vuelve a intentarlo.')
-                res.redirect('../'+params.comicUploader+'/'+params.comicName);
+                req.flash('error','Oops, parece que subiste imagenes invalidas, por favor asegurate que todas tengan un formato permitido, jpg/jpeg/png.')
+                res.redirect('back');
                 throw "Los archivos dentro del zip no eran imagenes validas"
             }
         };
-        let comic = await models.ComicEntry.findAll({
+
+        //se busca en la bdd el comic que se eligio para tomar su Id que debe ser asignado al capitulo
+        let comic = await models.ComicEntry.findOne({
             where:{
                 comicName: params.comicName
             }
         })
-
-        console.log('comic :>> ', JSON.stringify(comic));
-        comic = comic[0].dataValues
-        console.log('comic.id :>> ', comic.id);
+        comic = comic.dataValues
 
         const chapter = await models.ChapterEntry.create({
             chapterTitle: req.body.titleChapter,
             chapterNumber: req.body.numberChapter,
             comic_id: comic.id}
         );
-        console.log('chapter :>> ', JSON.stringify(chapter));
         req.flash('success','Capitulo subido con exito');
-        res.redirect('../');
+        res.redirect('../comic/upload');
 
     } catch (err) {
-        req.flash('error','Error. No se pudo subir el capitulo, intentelo de nuevo')
+        //Si Hubo un problema se elimina todo el directorio del capitulo por seguridad
         console.log(err);
+        req.flash('error','Error. No se pudo subir el capitulo, intentelo de nuevo')
+
 
         let path = './public/uploads/'+req.params.comicName+'/capitulo-'+req.body.numberChapter;
 
@@ -277,22 +288,24 @@ const upload_post = async (req, res) => {
 }
 
 const profile_get = async (req,res) => {
-    const comicId = req.params.comicId
-    let user;
-    let uploader = false;
-    if(await req.user){
-        await req.user.then(e => {
-            user = e;
-        })
+    let user; if (await req.user) {
+        await req.user.then( e => {user = e[0].dataValues} );
+        console.log('user en /profile:>> ', user);
     }
+    const comicId = req.params.comicId
+    let uploader = false;
+
 
     const comicEntry = await models.ComicEntry.findByPk(comicId)
 
-    const comic = comicEntry.dataValues;
+    let comic = comicEntry.dataValues;
 
+    if(comic.comicStatus.includes("-")) comic.comicStatus = comic.comicStatus.replace("-"," ")
+    if(comic.comicName.includes("-")) comic.comicName = comic.comicName.replaceAll("-"," ")
+    if(comic.comicCategories.includes("-")) comic.comicCategories = comic.comicCategories.replaceAll("-"," ")
 
     if (user) {
-        if (user[0].id === comic.comicUploader_id) {
+        if (user.id === comic.comicUploader_id) {
             uploader = true
         }
     }
@@ -300,7 +313,8 @@ const profile_get = async (req,res) => {
     let chapters = await models.ChapterEntry.findAll({
         where:{
             comic_id: comic.id
-        }
+        },
+        order: [['chapterNumber','ASC']]
     })
 
     let uploaderData = await models.UserEntry.findAll({
@@ -322,7 +336,7 @@ const profile_get = async (req,res) => {
     if (user) {
         userLike = await models.likeEntry.findOne({
             where: {
-                user_id: user[0].id,
+                user_id: user.id,
                 comic_id: comicId
             }
         })
@@ -342,19 +356,23 @@ const profile_get = async (req,res) => {
 
 const read_get = async (req, res) =>{
 
-    let user; if (req.user) {
-        await req.user.then( e => {user = e} );
+    let user; if (await req.user) {
+        await req.user.then( e => {user = e[0].dataValues} );
+        console.log('user en /read:>> ', user);
     }
+
     let settings;
     const params = req.params;
 
-    let Comic = await models.ComicEntry.findAll({
+    //Se busca el comic
+    let Comic = await models.ComicEntry.findOne({
         where:{
             id: params.comicId
         }
     })
-    Comic = Comic[0].dataValues
+    Comic = Comic.dataValues
 
+    //Luego se busca el capitulo especifico
     let chapter = await models.ChapterEntry.findOne({
         where: {
             comic_id: params.comicId,
@@ -363,6 +381,7 @@ const read_get = async (req, res) =>{
     })
     chapter = chapter.dataValues;
 
+    //Se selecciona el directorio del capitulo, y se toma la cantidad de paginas, al igual que la cantidad de paginas
     const dirPath = "./public/uploads/"+Comic.comicName+"/capitulo-"+params.chapter;
 
     const files = fs.readdirSync(dirPath);
@@ -373,6 +392,8 @@ const read_get = async (req, res) =>{
 
     const chapterPath = `/uploads/${Comic.comicName}/capitulo-${params.chapter}`
     let currentPage = parseInt(params.page);
+
+    //Cada vez que se cambia pagina se calcula la siguiente y anterior para los links
     let prev = currentPage-1;
     let next = currentPage+1;
 
@@ -390,55 +411,57 @@ const read_get = async (req, res) =>{
         next = amountPages;
     }
 
+    //Se definen los link para ser usados en la lectura, para cambiar de pagina
     const currentLink = `/read/${Comic.id}/${params.chapter}/${currentPage}`
     const nextPage = `/read/${Comic.id}/${params.chapter}/${next}`
     const prevPage = `/read/${Comic.id}/${params.chapter}/${prev}`
 
+    //Se consiguen los comentarios para mostrar debajo de cada capitulo
     let comments = await models.CommentEntry.findAll({
         where:{
             comic_id: Comic.id,
             chapter_id: chapter.id
         }
     })
-
     for (let i = 0; i < comments.length; i++) {
         comments[i] = comments[i].dataValues;
         let user = await models.UserEntry.findByPk(comments[i].user_id);
         comments[i].username = user.username;
     }
-
     const Url =  req.originalUrl;
 
-
+    //Si esta loggeado se buscan sus configuraciones para aplicar automaticamente
     if (user) {
         let Setts = await models.SettingsEntry.findAll({
             where: {
                 user_id: user[0].id,
-            }
+            },
+            order: [['createdAt','ASC']]
         })
 
-        for (let setting of Setts) {
-            setting = setting.dataValues
+        for (let i = 0; i < Setts.length; i++) {
+            Setts[i] = Setts[i].dataValues;
         }
-
         settings = {
             pageTurnDirection: Setts[0].value,
-            imgScalling: Setts[1].value,
-            jumpOnPageTurn: Setts[2].value,
+            jumpOnPageTurn: Setts[1].value,
+            filterOnOff: Setts[2].value,
             colorFilter: Setts[3].value,
-            filterOnOff: Setts[4].value,
-            imgDisplay: Setts[5].value,
-            focusMode: Setts[6].value,
         };
-
+        console.log('settings :>> ', settings);
     }
 
     res.render('comic/read',{title: title, user:user, settings:settings, comic:Comic, chapter:chapter, chapterPath:chapterPath, files:files, amountPages:amountPages, currentPage:currentPage, prevPage:prevPage, nextPage:nextPage, currentLink:currentLink, comments:comments, Url:Url,success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
 }
 
 const read_post = async (req, res) =>{
-    let user; if (req.user) await req.user.then( e => {user = e[0].dataValues} );
+    let user; if (await req.user) {
+        await req.user.then( e => {user = e[0].dataValues} );
+        console.log('user en /read post:>> ', user);
+    }
     params = req.params
+
+    //Esta seccion se encargaa de los comentarios
 
     const chapter = await models.ChapterEntry.findOne({
         where: {
@@ -453,6 +476,7 @@ const read_post = async (req, res) =>{
         }
     })
 
+    //Se toman los id del comic y el capitulo para linkear al comentario y luego mostrarlo
     const comment = await models.CommentEntry.create({
         user_id: user.id,
         chapter_id: chapter.dataValues.id,
@@ -466,20 +490,18 @@ const read_post = async (req, res) =>{
 const edit_comic_get = async (req, res) => {
 
     let uploader = req.params.uploaderId;
-    let user = await req.user;
-    user = user[0].dataValues;
-
-    console.log(uploader);
-
-    console.log(user.id);
-
-    if (user.id !== parseInt(uploader)) {
+    let user; if (await req.user) {
+        await req.user.then( e => {user = e[0].dataValues} );
+        console.log('user en /profile:>> ', user);
+    }
+    console.log('username :>> ', user[0].username);
+    if (user[0].id !== parseInt(uploader)) {
         req.flash('error','Error. User not allowed to edit');
         res.redirect('/');
         return;
     }
 
-    if (user.id === parseInt(uploader)) {
+    if (user[0].id === parseInt(uploader)) {
         res.render('comic/editComic', {title: 'Edit Comic Entry', user:user, uploaderId:req.params.uploaderId,comicId:req.params.comicId, success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
     }
 }
@@ -488,9 +510,9 @@ const edit_comic_post = async (req, res) =>{
 
     let comicId = await req.params.comicId;
     let uploaderId = await req.params.uploaderId;
-    console.log('params :>> ', req.params);
-    let user; if (await req.user){
-        req.user.then( e => { user = e[0] });
+    let user; if (await req.user) {
+        await req.user.then( e => {user = e[0].dataValues} );
+        console.log('user en /profile:>> ', user);
     }
 
     let oldComicData = await models.ComicEntry.findOne({
@@ -554,7 +576,6 @@ const edit_comic_post = async (req, res) =>{
             coverImage = file;
 
         });
-        console.log('coverImage :>> ', coverImage);
         let newCoverImage = `${comicName}-CoverImage${path.extname(coverImage)}`
 
         fs.renameSync(path.join(__dirname,'..','/public/uploads/',comicName,coverImage), path.join(__dirname,'..','/public/uploads/',comicName,newCoverImage))
@@ -610,9 +631,6 @@ const edit_comic_post = async (req, res) =>{
         })
     }
     if(await req.body.selectedCats){
-        console.log(req.body.selectedCats);
-        console.log('comicId :>> ', comicId);
-        console.log('uploaderId :>> ', uploaderId);
         await models.ComicEntry.update({comicCategories: req.body.selectedCats},{
             where: {
                 id: comicId,
@@ -628,10 +646,10 @@ const delete_comic_post = async (req, res) => {
 
     let comicId = req.params.comicId
     let uploaderId = req.params.uploaderId
-    let user = await req.user
-    user = user[0].dataValues
-
-    console.log('params :>> ', req.params);
+    let user; if (await req.user) {
+        await req.user.then( e => {user = e[0].dataValues} );
+        console.log('user en /profile:>> ', user);
+    }
 
     let uploaderData = await models.UserEntry.findOne({
         where: {
@@ -645,15 +663,12 @@ const delete_comic_post = async (req, res) => {
     })
 
     if (user.id !== uploaderData.id && user.role === 0 ) {
-        console.log('no es uploader o admin');
         req.flash('error','Parece que no esta autorizado para borrar este comic, como llegaste hasta aqui?');
         res.redirect('/');
         return;
     }
 
     if(!req.body.confirmComicDelete){
-        console.log(req.body.confirmComicDelete," 2");
-        console.log('no confirm');
         req.flash('error','Debe confirmar con su contraseña para borrar comics');
         res.redirect('back');
         return;
@@ -661,14 +676,12 @@ const delete_comic_post = async (req, res) => {
 
     if (user.role === 1) {
         if (!helpers.matchPassword(req.body.confirmComicDelete, user.password)) {
-            console.log('incorrecta');
             req.flash('error','Contraseña incorrecta');
             res.redirect('back');
             return;
         }
     }else{
         if (!helpers.matchPassword(req.body.confirmComicDelete, uploaderData.password)) {
-            console.log('incorrecta');
             req.flash('error','Contraseña incorrecta');
             res.redirect('back');
             return;
@@ -718,8 +731,10 @@ const delete_chapter_get = async (req, res) => {
     let comicId = req.params.comicId;
 
     let chapId = req.params.chapterId;
-    let user = await req.user;
-    user = user[0].dataValues;
+    let user; if (await req.user) {
+        await req.user.then( e => {user = e[0].dataValues} );
+        console.log('user en /profile:>> ', user);
+    }
 
     let comicData = await models.ComicEntry.findByPk(comicId);
 
@@ -763,9 +778,9 @@ const delete_chapter_get = async (req, res) => {
 }
 
 const likes_post = async (req, res) => {
-    let user; if(req.user){
-        await req.user.then(e => {user = e[0]});
-        user = user.dataValues;
+    let user; if (await req.user) {
+        await req.user.then( e => {user = e[0].dataValues} );
+        console.log('user en /profile:>> ', user);
     }
     let comicId = req.params.comicId;
 
@@ -788,16 +803,14 @@ const likes_post = async (req, res) => {
 }
 
 const deleteComment_post = async (req, res) => {
-    let user; if(req.user){
-        await req.user.then(e => {user = e[0]});
-        user = user.dataValues;
+    let user; if (await req.user) {
+        await req.user.then( e => {user = e[0].dataValues} );
+        console.log('user en /profile:>> ', user);
     }
 
     let commentId = req.params.commentId;
 
     let comment = await models.CommentEntry.findByPk(commentId);
-
-    console.log(comment.dataValues);
 
     if (user.id !== comment.dataValues.user_id && user.role === 0) {
         req.flash('error','Usuario no permitido para editar')

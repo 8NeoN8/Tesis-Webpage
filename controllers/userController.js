@@ -10,9 +10,8 @@ const settings_get = async (req, res) => {
     let user; if (await req.user) {
         await req.user.then(e => {user = e;})
     }
-    console.log('user :>> ', user);
 
-    let userId = req.params.id
+    let userId = req.params.userId
 
     if (user[0].id !== parseInt(userId)) {
         req.flash('error','Usuario no permitido para editar');
@@ -26,93 +25,107 @@ const settings_get = async (req, res) => {
 }
 
 const settings_post = async (req, res) => {
-    let user; await req.user.then(e => {user = e[0].dataValues;})
+    let user; await req.user.then(e => {user = e;})
 
-    let userId = req.params.id;
+    let userId = req.params.userId;
+    console.log('userId :>> ', userId);
 
-    if (user.id !== parseInt(userId)) {
+
+    //Primero se verifica que el usuario sea correcto
+    if (user[0].id !== parseInt(userId)) {
         req.flash('error','Usuario no permitido para editar');
         res.redirect('back');
         return
     }
-
-    let userentry = await models.UserEntry.findByPk(req.params.id)
-
+    let userentry = await models.UserEntry.findByPk(req.params.userId)
     userentry = userentry.dataValues
 
+    //Si el usuario es correcto se toman y modifican los datos que se hayan ingresado
 
+    //Opciones para los comics --------
+
+    //Opcion para elegir la direccion de paso de pagina del comic, izquierda-derecha, derecha-izquierda, arriba-abajo, abajo-arriba
     if (req.body.pageTurn) {
         await models.SettingsEntry.update({value:req.body.pageTurn},{
             where: {
-                user_id: req.params.id,
+                user_id: userId,
                 setting:"pageTurnDirection"
             }
         })
     }
 
-
+    //Opcion para el salto de posicion de la pagina al cambiar de pagina, saltar al tope de la imagen o no saltar
     if (req.body.jumpPage) {
         await models.SettingsEntry.update({value:req.body.jumpPage},{
             where: {
-                user_id: req.params.id,
+                user_id: userId,
                 setting:"jumpOnPageTurn"
             }
         })
     }
 
+    //Opcion para elegir uno de los colores pre-establecidos para el comic
     if (req.body.colorFilter) {
         await models.SettingsEntry.update({value:req.body.colorFilter},{
             where: {
-                user_id: req.params.id,
+                user_id: userId,
                 setting:"colorFilter"
             }
         })
     }
 
+    //Aqui si se eligio, se puede ingresar un color personalizado
     if (req.body.customColor) {
         await models.UserEntry.update({value:req.body.customColor},{
             where: {
-                user_id: req.params.id,
+                user_id: userId,
                 setting:"colorFilter"
             }
         })
     }
 
+    //Y por ultimo en opciones de comic se define si el filtro se activa o no
     if (req.body.filterOnOff) {
         await models.SettingsEntry.update({value:req.body.filterOnOff},{
             where: {
-                user_id: req.params.id,
+                user_id: userId,
                 setting:"filterOnOff"
             }
         })
     }
 
+    //Opciones de cuenta
+
+    //cambio de nombre de usuario, esto conlleva a muchos cambios en los datos de la app
     if (req.body.username) {
+        //primero se busca si no hay un usuario que ya tenga el alias que se ingreso
         let findUser = await models.UserEntry.findOne({
             where: {
                 username: req.body.username
             }
         })
-        console.log(findUser);
         if (findUser) {
             req.flash('error','Este nombre de usuario ya esta siendo utilizado')
             res.redirect('back')
             return
         }
+
+        //Si no lo hay, por ende esta disponible, se cambian todos los registros del antiguo nombre de usuario
         await models.UserEntry.update({username: req.body.username},{
             where: {
-                id: req.params.id
+                id: userId
             }
         })
 
-        let dirPath = path.join(__dirname,'..','/public/uploads/users/',userentry.username)
-        console.log(dirPath);
-        if(fs.existsSync(dirPath)){
-            console.log('existe');
-        }else{
-            console.log('no existe wtf?');
-        }
+        await models.ComicEntry.update({comicWriter: req.body.username},{
+            where: {
+                comicWriter: userentry.username
+            }
+        })
 
+
+        //Aqui se lleva a cabo el cambio en el directorio del usuario
+        let dirPath = path.join(__dirname,'..','/public/uploads/users/',userentry.username)
         if(fs.existsSync(`./public/uploads/users/${userentry.username}`)){
             fs.renameSync(path.join(__dirname,'..','/public/uploads/users',userentry.username),path.join(__dirname,'..','/public/uploads/users',req.body.username));
             let pfpName;
@@ -124,6 +137,7 @@ const settings_post = async (req, res) => {
                 }
             }
 
+            //Se cambia en la bdd la direccion de la foto de perfil del usuario
             pfpPath = `/uploads/users/${req.body.username}/${pfpName}`;
             await models.UserEntry.update({profilePicPath: pfpPath},{
                 where: {
@@ -133,6 +147,7 @@ const settings_post = async (req, res) => {
         }
     }
 
+    //Cambio de email si se desea
     if (req.body.email) {
         let findEmail = await models.UserEntry.findOne({
             where: {
@@ -145,28 +160,22 @@ const settings_post = async (req, res) => {
             res.redirect('back')
             return
         }
+
+        //despues de buscar y asegurar que no esta registrado el email nuevo, se actualiza y guarda
         await models.UserEntry.update({email: req.body.email},{
             where: {
-                id: req.params.id
+                id: userId
             }
         })
     }
 
-    if (req.body.theme){
-        await models.SettingsEntry.update({value:req.body.theme},{
-            where: {
-                user_id: req.params.id,
-                setting:"theme"
-            }
-        })
-    }
-
+    //Si se desa cambiar la contraseña, el usuario debe de ingresar su contraseña actual, la nueva, y confirmar la contraseña nueva
     if (req.body.oldPassword && req.body.newPassword && req.body.confirmNewPassword) {
         if (req.body.newPassword === req.body.confirmNewPassword) {
-            if (helpers.matchPassword(oldPassword,userentry.password)) {
+            if (helpers.matchPassword(req.body.newPassword, req.body.oldPassword)) {
                 await models.UserEntry.update({password: helpers.encryptPassword(req.body.newPassword)},{
                     where: {
-                        id: req.params.id
+                        id: userId
                     }
                 })
             }
@@ -175,6 +184,15 @@ const settings_post = async (req, res) => {
 
     res.redirect('back')
 }
+
+/* if (req.body.theme){
+    await models.SettingsEntry.update({value:req.body.theme},{
+        where: {
+            user_id: req.params.id,
+            setting:"theme"
+        }
+    })
+} */
 
 const deleteUser = async (req, res) => {
 
@@ -244,7 +262,6 @@ const userProfile_get = async (req, res) => {
         if (user[0].id === userId) {
             isUploader = true;
         }
-        console.log('user :>> ', user[0]);
     }
     let userEntry = await models.UserEntry.findByPk(userId);
 

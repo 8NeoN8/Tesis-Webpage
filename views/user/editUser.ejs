@@ -1,12 +1,6 @@
 <%- include ('../partials/head.ejs') %>
-<h1>Editar usuario</h1>
-
-<%- include ('../partials/nav.ejs') %>
-
 <form action="/user/editUser/<%= users.id %> " method="post">
-
     <div>
-
         <label for="name">Name</label>
         <input type="text" value="<%= users.name %>" name="name" id="name" required>
 
@@ -17,11 +11,7 @@
         <input type="password" name="password" id="password" required>
 
         <button type="submit">Register</button>
-
     </div>
-
 </form>
-
 <a href="/user/login">Login</a>
-
 <%- include ('../partials/footer.ejs') %>

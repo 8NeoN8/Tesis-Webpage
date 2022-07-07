@@ -1,15 +1,8 @@
 <%- include ('../partials/head.ejs') %>
-<%- include ('../partials/message.ejs') %>
-<% if (user) { %>
-    <h1>Hello <%= user.name %> </h1>
-    <%- include ('../partials/navLogged.ejs') %>
-<% } else { %>
-    <%- include ('../partials/navGuest.ejs') %>
-<% } %>
 
 <% if (profileUser) { %>
     <h1><%= profileUser.username %> </h1>
-    <img src=<%= profileUser.profilePicPath %>  alt="">
+    <img src=<%= profileUser.profilePicPath %>  width="200px" height="200px">
     <br>
 <% } %>
 

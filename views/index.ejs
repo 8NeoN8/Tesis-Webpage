@@ -1,39 +1,8 @@
 <%- include ('./partials/head.ejs') %>
-<%- include ('./partials/message.ejs') %>
-
-<%- include ('./partials/message.ejs') %>
 
 <% if (user) { %>
-    <h1>Hello <% console.log('user :>> ', user); %> </h1>
-    <%- include ('./partials/navLogged.ejs') %>
-<% } else { %>
-    <%- include ('./partials/navGuest.ejs',{user:user}) %>
-<% } %>
-
-<!-- <div class="form-group m-2">
-    <form action="/notif" method="post">
-        <select name="notCtx" id="notCtx">
-            <option value="">Contenido inapropiado</option>
-            <option value="">Lenguaje ofensivo</option>
-            <option value=""></option>
-            <option value=""></option>
-            <option value=""></option>
-            <option value=""></option>
-            <option value=""></option>
-        </select>
-        <br>
-
-        <textarea name="notMsg" id="notMsg" cols="60" rows="3" placeholder="Escriba algo adicional si lo desea"></textarea>
-
-        <h5>from(if(user.role = 0) > user to admin)(if(user.role = 1) > admin to user)</h5>
-        <h5>from(if(comicUpload) > null</h5>
-        <h5>if(comicUpload) = notif.context = upload</h5>
-    </form>
-</div> -->
-
-<% if (user) { %>
-    <% console.log(user[0].role); %>
-    <% if (user[0].role === 1) { %>
+    <% console.log(user.role); %>
+    <% if (user.role === 1) { %>
         <div class="position-relative " style="width: 100%;">
             <h1 style="text-align:center;">Usuarios registrados</h1>
             <% if (users.length > 0) { %>
@@ -52,24 +21,60 @@
     <% } %>
 <% } %>
 
-<% if (newComics.length>0) { %>
-    <br>
-    <h3 class="bg-primary text-light py-1">Comics Nuevos!</h3>
-    <% for( let i = 0; i < 5; i++ ) { %>
-        <% if (newComics[i]) { %>
-            <div class="comic_block_wrapper bg-secondary p-2">
-                <div class="bg-dark p-2">
-                    <a href=<%= `/read/${newComics[i].dataValues.id}` %>>
-                        <img src="<%= newComics[i].dataValues.comicCoverPath %>" width="100px" height="100px">
-                        <h3>title: <%= newComics[i].dataValues.comicName %></h3>
-                        <h3>Author: <%= newComics[i].dataValues.comicWriter %></h3>
-                        <h3>Status: <%= newComics[i].dataValues.comicStatus %></h3>
-                    </a>
+<div class="container bg-dark d-flex row">
+    <div class="col-sm-12">
+        <h3 class="bg-primary text-light text-center p-1 rounded-pill">Comics Mas Gustados de la Semana!</h3>
+        <% if (likedThisWeek.length>0) { %>
+            <div id="carouselExampleControls" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    <% for( let i = 0; i < likedThisWeek.length; i++ ) { %>
+                        <% if (likedThisWeek[i]) { %>
+                            <div <% if (i === 0) { %> class="carousel-item active" <% } else {%> class="carousel-item" <% } %> >
+                                <a class="position-relative justify-content-center" href=<%= `/read/${likedThisWeek[i].id}` %>>
+                                    <img src="<%= likedThisWeek[i].comicCoverPath %>" class="d-block mx-auto img-fluid" style="max-height: 500px; min-height: 500px;">
+                                    <div class="carousel-caption d-none d-md-block">
+                                        <h3 class="text-center"> <%= likedThisWeek[i].comicName %></h3>
+                                    </div>
+                                </a>
+                            </div>
+                        <% } %>
+                    <% } %>
                 </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Anterior</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="next">
+                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Siguiente</span>
+                </button>
             </div>
         <% } %>
-    <% } %>
-<% } %>
+    </div>
+    <div class="col-sm-12">
+        <% if (newComics.length>0) { %>
+            <h3 class="bg-primary text-light text-center rounded-pill">Comics Nuevos!</h3>
+            <% for( let i = 0; i < 5; i++ ) { %>
+                <% if (newComics[i]) { %>
+                    <div class="bg-secondary position-relative p-1">
+                        <div class="bg-dark p-2 position-relative">
+                            <a class="px-auto text-light" href=<%= `/read/${newComics[i].id}` %>>
+                                <img src="<%= newComics[i].comicCoverPath %>" class="img-fluid" width="100%" height="100%">
+                            </a>
+                        </div>
+                        <p class="position-absolute bottom-0 w-100 fs-4 text-info bg-secondary">
+                            Titulo: <%= newComics[i].comicName %>
+                            <br>
+                            Autor: <%= newComics[i].comicWriter %>
+                        </p>
+                    </div>
+                <% } %>
+            <% } %>
+        <% } %>
+    </div>
+</div>
+
+
 
 <% if (updatedComics.length>0) { %>
     <br>
@@ -78,11 +83,11 @@
         <% if (updatedComics[i]) { %>
             <div class="comic_block_wrapper bg-secondary p-2">
                 <div class="bg-dark p-2">
-                    <a href=<%= `/read/${updatedComics[i].dataValues.id}` %>>
-                        <img src="<%= updatedComics[i].dataValues.comicCoverPath %>" width="100px" height="100px">
-                        <h3>title: <%= updatedComics[i].dataValues.comicName %></h3>
-                        <h3>Author: <%= updatedComics[i].dataValues.comicWriter %></h3>
-                        <h3>Status: <%= updatedComics[i].dataValues.comicStatus %></h3>
+                    <a href=<%= `/read/${updatedComics[i].id}` %>>
+                        <img src="<%= updatedComics[i].comicCoverPath %>" width="100px" height="100px">
+                        <h3>title: <%= updatedComics[i].comicName %></h3>
+                        <h3>Author: <%= updatedComics[i].comicWriter %></h3>
+                        <h3>Status: <%= updatedComics[i].comicStatus %></h3>
                     </a>
                 </div>
             </div>
@@ -90,24 +95,7 @@
     <% } %>
 <% } %>
 
-<% if (likedWeek.length>0) { %>
-    <br>
-    <h3 class="bg-primary text-light py-1">Comics Mas Gustados de la Semana!</h3>
-    <% for( let i = 0; i < 5; i++ ) { %>
-        <% if (likedWeek[i]) { %>
-            <div class="comic_block_wrapper bg-secondary p-2">
-                <div class="bg-dark p-2">
-                    <a href=<%= `/read/${likedWeek[i].id}` %>>
-                        <img src="<%= likedWeek[i].comicCoverPath %>" width="100px" height="100px">
-                        <h3>title: <%= likedWeek[i].comicName %></h3>
-                        <h3>Author: <%= likedWeek[i].comicWriter %></h3>
-                        <h3>Status: <%= likedWeek[i].comicStatus %></h3>
-                    </a>
-                </div>
-            </div>
-        <% } %>
-    <% } %>
-<% } %>
+
 <% if (rngTags) { %>
     <br>
     <h3 class="bg-primary text-light py-1">Comics categoria: <%= rngTags[0] %> </h3>

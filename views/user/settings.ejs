@@ -1,46 +1,36 @@
 <%- include ('../partials/head.ejs') %>
-<%- include ('../partials/message.ejs') %>
-<h1>Configuracion</h1>
 
-<% if (user) { %>
-    <%- include ('../partials/navLogged.ejs',{user:user}) %>
-<% } else { %>
-    <h1>user not logged in</h1>
-    <%- include ('../partials/navGuest.ejs') %>
-<% } %>
+<form class="form-group" action=<%= `../settings/${user[0].dataValues.id}` %>  method="post" enctype="multipart/form-data">
 
-<% if (user[0].role === 1) { %>
-    <div id="reportDiv">
+    <h4 class="text-center">Opciones de Comic</h4>
+
+    <div class="form-group m-2">
+        <label class="form-label" for="pageTurn">Botones de imagen</label>
+        <select class="form-select" name="pageTurn" id="pageTurn">
+            <option selected></option>
+            <option value="lr"> izquierda-Derecha </option>
+            <option value="rl">Derecha-Izquierda</option>
+            <option value="ud">Arriba-Abajo</option>
+            <option value="du">Abajo-Arriba</option>
+        </select>
+    </div>
+
+    <div class="form-group m-2">
+        <label class="form-label" for="jumpPage">Saltar al cambiar de pagina</label>
+        <select class="form-select" name="jumpPage" id="jumpPage">
+            <option selected></option>
+            <option value="nojump">No Saltar</option>
+            <option value="imgTop">Tope de imagen</option>
+            <option value="imgBottom">Final de imagen</option>
+        </select>
+    </div>
+
+    <div class="form-group m-2">
 
     </div>
-<% } %>
-
-<form action=<%= `../settings/${user[0].dataValues.id}` %>  method="post" enctype="multipart/form-data">
-
-    <h4>Opciones de Comic</h4>
-
-    <label for="pageTurn">Direccion de cambio de imagen (cambia el lugar de los botones)</label>
-    <select name="pageTurn" id="pageTurn">
-        <option selected></option>
-        <option value="lr"> izquierda-Derecha </option>
-        <option value="rl">Derecha-Izquierda</option>
-        <option value="ud">Arriba-Abajo</option>
-        <option value="du">Abajo-Arriba</option>
-    </select>
-    <br>
-
-    <label for="jumpPage">Saltar al cambiar de pagina</label>
-    <select name="jumpPage" id="jumpPage">
-        <option selected></option>
-        <option value="nojump">No Saltar</option>
-        <option value="imgTop">Tope de imagen</option>
-        <option value="imgBottom">Final de imagen</option>
-    </select>
-    <br>
-
-    <input class="colorfilter">
-        <label for="colorFilter">Filtros</label>
-        <select name="colorFilter" id="colorFilter">
+    <div class=" form-group m-2 colorfilter">
+        <label class="form-label" for="colorFilter">Filtros</label>
+        <select class="form-select" name="colorFilter" id="colorFilter">
             <option selected></option>
             <option value="#ffae00">Naranja</option>
             <option value="#00d9ff">Celeste</option>
@@ -49,63 +39,71 @@
             <option value="none">Ninguno</option>
             <option value="#ffffff">Personalizado</option>
         </select>
-        <br>
-        <label for="customColor">ColorPersonalizado</label>
-        <input type="color" name="customColor" id="customColor" value="#ffffff">
-        <br>
-        <label for="filterOnOf">Aplicar filtro?</label>
-        <br>
-        <label for="filterOn">Si</label>
-        <input type="radio" name="filterOnOff" id="filterOn" value="on">
-        <label for="filterOff">No</label>
-        <input type="radio" name="filterOnOff" id="filterOff" value="off">
     </div>
-    <br>
 
-    <h4>Opciones de usuario</h4>
+    <div class="form-group m-2">
+        <label class="form-label" for="customColor">ColorPersonalizado</label>
+        <input type="color" name="customColor" id="customColor" value="#ffffff">
+    </div>
 
-    <label for="username">Nombre de usuario</label>
-    <input type="text" name="username" id="username">
-    <br>
-    <label for="email">E-mail</label>
-    <input type="email" name="email" id="email">
-    <br>
+    <div class="form-group m-2">
+        <label class="form-label" for="filterOnOf">Aplicar filtro?</label>
 
-    <label for="userPfp">Imagen de Perfil</label>
-    <input type="file" name="userPfp" id="userPfp">
-    <br>
-    <img id="pfpImg" src=" " width="200px" height="200px" hidden>
-    <br>
+        <label class="form-check-label" for="filterOn">Si</label>
+        <input class="form-check-input" type="radio" name="filterOnOff" id="filterOn" value="on">
 
-    <label for="theme">Tema de color</label>
-    <select name="theme" id="theme">
-        <option></option>
-        <option value="dark">Oscuro</option>
-        <option value="light">Claro</option>
-    </select>
-    <br>
+        <label class="form-check-label" for="filterOff">No</label>
+        <input class="form-check-input" type="radio" name="filterOnOff" id="filterOff" value="off">
+    </div>
 
-    <h5>Si quieres cambiar la contraseña, debes primero colocar tu contraseña actual y luego confirmar la nueva contraseña</h5>
-    <label for="oldPassword">Contraseña Actual</label>
-    <input type="password" name="oldPassword" id="oldPassword">
-    <br>
-    <label for="newPassword">Nueva Contraseña</label>
-    <input type="password" name="newPassword" id="newPassword">
-    <br>
-    <label for="confirmNewPassword">Confirmar Nueva Contraseña</label>
-    <input type="password" name="confirmNewPassword" id="confirmNewPassword">
-    <br>
+    <h4 class="text-center">Opciones de usuario</h4>
 
-    <button id="userDeleteButton" class="btn-danger">Eliminar Usuario</button>
+    <div class="form-group m-2">
+        <label class="form-label" for="username">Nombre de usuario</label>
+        <input class="form-control" type="text" name="username" id="username">
+    </div>
 
-    <button class="btn-primary" type="submit">Guardar</button>
+    <div class="form-group m-2">
+        <label class="form-label" for="email">E-mail</label>
+        <input class="form-control" type="email" name="email" id="email">
+    </div>
+    <div class="form-group m-2">
+        <label class="form-label" for="userPfp">Imagen de Perfil</label>
+        <input type="file" name="userPfp" id="userPfp" placeholder="">
+        <img id="pfpImg" src=" " width="200px" height="200px" hidden>
+    </div>
+    <div class="form-group m-2">
+        <label class="form-label" for="theme">Tema de color</label>
+        <select class="form-select" name="theme" id="theme">
+            <option></option>
+            <option value="dark">Oscuro</option>
+            <option value="light">Claro</option>
+        </select>
+    </div>
+    <div class="form-group m-2">
+        <h5>Si quieres cambiar la contraseña, debes primero colocar tu contraseña actual y luego confirmar la nueva contraseña</h5>
+        <label class="form-label" for="oldPassword">Contraseña Actual</label>
+        <input class="form-control" type="password" name="oldPassword" id="oldPassword">
+
+        <label class="form-label" for="newPassword">Nueva Contraseña</label>
+        <input class="form-control" type="password" name="newPassword" id="newPassword">
+
+        <label class="form-label" for="confirmNewPassword">Confirmar Nueva Contraseña</label>
+        <input class="form-control" type="password" name="confirmNewPassword" id="confirmNewPassword">
+    </div>
+    <div class="form-group m-2">
+        <button id="userDeleteButton" class="btn-danger">Eliminar Usuario</button>
+        <button class="btn-primary" type="submit">Guardar</button>
+
+    </div>
+
 </form>
 
 <form action=<%= `user/deleteUser/${user[0].dataValues.id}` %> hidden>
 
     <h2>Estas seguro que quieres borrar tu usuario?</h2>
 
-    <label for="confirmDelete">Confirmar con Contraseña</label>
+    <label class="form-label" for="confirmDelete">Confirmar con Contraseña</label>
     <input type="password" name="confirmDelete" id="confirmDelete">
 
     <button class="btn-danger" type="submit">Eliminar</button>

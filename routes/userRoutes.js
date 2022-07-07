@@ -7,32 +7,37 @@ const models = require('../models/models');
 const path = require('path');
 const fs = require('fs');
 
+//Definiendo procesos de Multer, el encargado de subir archivos al servidor
+//En este caso, si se desea cambiar de imagen de perfil de usuario
 const storageSetting = multer.diskStorage({
     destination:async function(req,response,done){
-        //Aqui es donde se define el lugar o directorio donde se guardara el archivo
+        let user; await req.user.then(e => {user = e;})
+        user = user[0].dataValues
+        let user_id = req.params.userId;
+        user = await models.UserEntry.findByPk(user_id);
+        console.log('params :>> ', req.params);
 
-        let user_id = req.params.id;
-        let user = await models.UserEntry.findByPk(user_id);
-        user = user.dataValues;
+        console.log('user :>> ', user);
 
+        //Primero se hace una busqueda en la bdd para confirmar si ya existe un usuario con el nombre ingresado
         if (req.body.username) {
-            console.log('username :>> ', req.body.username);
             let findUser = await models.UserEntry.findOne({
                 where: {
                     username: req.body.username
                 }
             })
-            console.log(findUser);
+            //Si se encuentra se devuelve un error
             if (findUser) {
-                req.flash('error','Este nombre de usuario ya esta siendo utilizado')
-                done(new Error('Este nombre de usuario ya esta siendo utilizado'))
+                req.flash('error','Este nombre de usuario ya esta siendo utilizado');
+                done(new Error('Este nombre de usuario ya esta siendo utilizado'));
+                return;
             }
+
             deleteFolderRecursive(`./public/uploads/users/${user.username}`);
             user.username = req.body.username
         }
 
-        if(fs.existsSync(path.join(__dirname,'..','/public/uploads/users',user.username))){
-        }else{
+        if(!fs.existsSync(path.join(__dirname,'..','/public/uploads/users',user.username))){
             fs.mkdirSync(path.join(__dirname,'..','/public/uploads/users',user.username))
         }
 
@@ -40,16 +45,18 @@ const storageSetting = multer.diskStorage({
 
         if (files.length > 0) {
             if (files[0].includes(`user-${user_id}-pfp`)) {
-                fs.unlinkSync(files[0])
+                fs.unlinkSync(`./public/uploads/users/${user.username}/${files[0]}`)
             }
         }
         done(null,'./public/uploads/users/'+user.username)
     },
     filename:async function (req,file,done){
         //Aqui se denomina el nombre de la imagen
-        let user_id = req.params.id;
-        let user = await models.UserEntry.findByPk(user_id);
-        user = user.dataValues;
+        let user; await req.user.then(e => {user = e;})
+        user = user[0].dataValues
+        let user_id = req.params.userId;
+        user = await models.UserEntry.findByPk(user_id);
+
         let pfpName = `user-${user_id}-pfp${path.extname(file.originalname)}`;
         let pfpPath = `/uploads/users/${user.username}/${pfpName}`;
         await models.UserEntry.update({profilePicPath: pfpPath},{
@@ -64,10 +71,10 @@ const storageSetting = multer.diskStorage({
 const uploadSettingsPfp = multer({storage:storageSetting}).single('userPfp');
 
 
-//*Done
-router.get('/settings/:id', isLoggedIn, controller.settings_get);
-//*Done
-router.post('/settings/:id', isLoggedIn, function(req, res, next){
+//Enrutamiento de las configuraciones
+router.get('/settings/:userId', isLoggedIn, controller.settings_get);
+
+router.post('/settings/:userId', isLoggedIn, function(req, res, next){
     uploadSettingsPfp(req, res, err =>{
         if (err){
             console.log(err);
@@ -75,15 +82,15 @@ router.post('/settings/:id', isLoggedIn, function(req, res, next){
             return
         }
         next()
-    })}, controller.settings_post);
-//*Done
+    })
+}, controller.settings_post);
+
 router.get('/deleteUser/:id', controller.deleteUser);
 
-//TODO
 router.get('/profile/:userId',controller.userProfile_get);
-//TODO
+
 router.post('/profile/:userId',controller.userProfile_post);
-//TODO
+
 router.get('/delete/social/:userId/:socialId',controller.deleteNetwork)
 
 function deleteFolderRecursive(path) {
@@ -102,10 +109,3 @@ function deleteFolderRecursive(path) {
 };
 
 module.exports = router;
-
-/*
-!sistema de notifs de seguidos
-
-!hacer reportes(solo los admins)
-
-*/

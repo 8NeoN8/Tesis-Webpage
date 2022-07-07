@@ -1,55 +1,92 @@
 <%- include ('../partials/head.ejs') %>
-<% if (user) { %>
-    <h1>Hello <%= user[0].name %> </h1>
-    <%- include ('../partials/navLogged.ejs') %>
-<% } else { %>
-    <%- include ('../partials/navGuest.ejs') %>
-<% } %>
-<%- include ('../partials/message.ejs') %>
+<% if (Object.keys(params).length > 0) { %>
+    <section class="sm-container border border-watermelon">
+        <div class="h4 py-2 m-5 text-danger border-bottom border-danger">
+            Subir capitulo para <%= comicSelected.comicName %>
+        </div>
 
-<% if (comics.length > 0) { %>
-    <% if (comicSelected.length > 0) { %>
-        <h1>Subir capitulo</h1>
-        <h3>Alerta: Solo se pueden subir archivos tipo .zip</h3>
-        <h4 class="bg-danger text-light">Alerta: Las paginas dentro del zip tienen que estar ordenadas en este formato, </h4>
-        <% let formUrl =  "/comic/upload/" + params.comicId +"/"+ params.comicName%>
-        <form action="<%= formUrl %>" method="post" enctype="multipart/form-data">
-            <label for="numberChapter">Numero del capitulor</label>
-            <input type="number" min="1" name="numberChapter" required>
-            <br>
-            <label for="titleChapter">Titulo del capitulo</label>
-            <input type="text" name="titleChapter">
-            <br>
-            <label for="chapterFile">Archivo para subir</label>
-            <input type="file" name="chapterFile" id="chapterFile" accept=".zip" required>
-            <br>
-            <button type="submit">Subir</button>
-        </form>
-
-    <% } else {%>
-
-        <h2>Selecciona un comic para subir un capitulo</h2>
-        <br>
-        <h3>Subir capitulos</h3>
-
-        <% for( let i = 0; i < comics.length; i++ ) { %>
-
-            <% let uploadUrl = "/comic/upload/" + comics[i].id + "/" + comics[i].comicName%>
-
-            <div class="comic comic-selection-upload-<%= i %> ">
-                <a href="<%= uploadUrl %> ">
-                    <h3><%= comics[i].comicName %> </h3>
-                    <h3><%= comics[i].comicDescription %> </h3>
-                    <img src="<%= comics[i].comicCoverPath %> " width="100px" height="100px">
-                </a>
-                <a href="/read/<%= comics[i].id %> ">Go to Comic</a>
+        <div class="text-center">
+            <button class="btn btn-watermelon h5 my-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                Instrucciones
+            </button>
+        </div>
+        <div class="container collapse" id="collapseExample">
+            <div class="card card-body">
+                <ul class="list-group list-group-numbered list-group-flush">
+                    <li class="list-group-item">
+                        Solo se pueden subir archivos de tipo .zip
+                    </li>
+                    <li class="list-group-item">El archivo puede llamarse de cualquier forma</li>
+                    <li class="list-group-item">Las imagenes deben estar ordenadas en este formato, pag1.ext, pag2.ext, pag3.ext... <br> &emsp; .ext: jpg, jpeg, png</li>
+                    <li class="list-group-item">Solo se admiten imagenes con dichas extensiones</li>
+                    <li class="list-group-item">No se reemplazaran capitulos en caso de colocar un numero de capitulo repetido</li>
+                    <li class="list-group-item">Si deseas borrar un capitulo debes hacerlo desde el perfil del comic</li>
+                    <li class="list-group-item">Estan prohibidos los titulos obscenos</li>
+                </ul>
             </div>
-        <% } %>
-    <% } %>
+        </div>
 
+        <form class="container mx-auto px-sm-3 py-1 my-1 bg-neutral text-dark rounded" action="<%= `/comic/upload/${params.uploaderId}/${params.comicId}` %>" method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="titleChapter" class="form-label">Titulo del Capitulo</label>
+                <input type="text" class="form-control" id="titleChapter" aria-describedby="titleChapterHelp" required>
+                <div id="titleChapterHelp" class="form-text bg-sky rounded p-1">Dale un nombre que llame la atencio!</div>
+            </div>
+            <div class="mb-3">
+                <label for="numberChapter" class="form-label">Numero de Capitulo</label>
+                <input type="number" min="1" class="form-control" id="numberChapter" aria-describedby="numberChapterHelp" required>
+                <div id="emailHelp" class="form-text bg-sky rounded p-1">No se reemplazaran capitulos si eliges un numero repetido, no te preocupes por eso!</div>
+            </div>
+            <div class="mb-3">
+                <label for="chapterFile" class="form-label">Archivo</label>
+                <input type="file" class="form-control" id="chapterFile" aria-describedby="chapterFileHelp" required>
+                <div id="chapterFileHelp" class="form-text bg-sky rounded p-1">Permitimos capitulos de hasta 200mb en peso, no es tanto pero por ahora eso te ofrecemos!</div>
+            </div>
+            <div class="text-center">
+                <button type="submit" class="btn btn-watermelon mx-auto">Subir</button>
+                <button type="submit" class=" border-0 mx-auto">
+                    <a class="btn btn-secondary" href="/comic/upload">Cancelar</a>
+                </button>
+            </div>
+        </form>
+    </section>
 <% } else {%>
-    <% console.log("longitud ",comics.length); %>
-    <h1>User has no comics</h1>
-<% } %>
 
+    <section class="sm-container">
+        <% if (comics.length > 0) { %>
+
+            <div class="h4 py-2 m-5 text-danger border-bottom border-danger">
+                Selecciona un comic para actualizar
+            </div>
+            <div class="h6 py-1 m-5 text-secondary border-bottom border-secondary">
+                Si deseas eliminar un comic, debes hacerlo desde el perfil del comic.
+            </div>
+
+            <% for( let i = 0; i < comics.length; i++ ) { %>
+
+                <div class="container mx-auto px-sm-3 py-3 my-5 bg-neutral text-dark d-flex border border-carbon col-lg-6">
+
+                    <div class="form-group col-sm-3 text-center">
+                        <img class="border border-watermelon rounded" src="<%= comics[i].comicCoverPath %> " style="max-width: 130px; max-height:130px; min-width: 80px; min-height: 80px">
+                    </div>
+                    <div class="form-group col-sm-9 col-lg-8 bg-sky rounded">
+                        <div class="h4 bg-neutral rounded border-bottom border-start border-watermelon border-opacity-25 border-3 mb-2 p-2"><%= comics[i].comicName %> </div>
+                        <div class="p-1 text-center">
+                            <a class=" text-neutral text-center btn btn-watermelon" href="<%= `/comic/upload/${comics[i].comicUploader_id}/${comics[i].id}` %> ">Subir capitulo</a>
+                            <a class=" text-neutral text-center btn btn-watermelon" href="<%= `/comic/edit/${comics[i].comicUploader_id}/${comics[i].id}` %> ">Editar informacion</a>
+                            <a class=" text-neutral text-center btn btn-watermelon" href="/read/<%= comics[i].id %> ">Ir al perfil</a>
+                        </div>
+                    </div>
+
+                </div>
+
+
+
+            <% } %>
+
+        <% } else {%>
+            <div></div>
+        <% } %>
+    </section>
+<% } %>
 <%- include ('../partials/footer.ejs') %>

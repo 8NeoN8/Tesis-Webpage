@@ -1,12 +1,4 @@
 <%- include ('./partials/head.ejs') %>
 
-<h1>ABOUT</h1>
-
-<% if (user) { %>
-    <h1>Hello <%= user[0].name %> </h1>
-    <%- include ('./partials/navLogged.ejs') %>
-<% } else { %>
-    <%- include ('./partials/navGuest.ejs') %>
-<% } %>
 
 <%- include ('./partials/footer.ejs') %>

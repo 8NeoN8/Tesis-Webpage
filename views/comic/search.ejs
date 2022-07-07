@@ -1,14 +1,5 @@
 <%- include ('../partials/head.ejs') %>
 
-<%- include ('../partials/message.ejs') %>
-
-<% if (user) { %>
-    <h1>Hello <%= user.name %> </h1>
-    <%- include ('../partials/navLogged.ejs',{user}) %>
-<% } else { %>
-    <%- include ('../partials/navGuest.ejs') %>
-<% } %>
-
 <form class="d-flex" action="/search/" method="post">
     <select name="cats" id="cats">
     </select>
@@ -47,6 +38,7 @@
             let catOption = document.createElement('option');
             catOption.setAttribute('value',catGroup[i]);
             catOption.innerText = catGroup[i];
+            if(i === 0) catOption.innerText = "Categorias";
             cats.appendChild(catOption);
         }
     }

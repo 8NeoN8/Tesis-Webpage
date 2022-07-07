@@ -1,12 +1,4 @@
 <%- include ('../partials/head.ejs') %>
-<h1>Create comic entry</h1>
-<%- include ('../partials/message.ejs') %>
-<% if (user) { %>
-    <h1>Hello <%= user.username %> </h1>
-    <%- include ('../partials/navLogged.ejs') %>
-<% } else { %>
-    <%- include ('../partials/navGuest.ejs') %>
-<% } %>
 
 <form action=<%= `/comic/edit/${uploaderId}/${comicId}` %> enctype="multipart/form-data" method="post" class="p-3 bg-dark text-light">
     <div class="form-group m-2">
