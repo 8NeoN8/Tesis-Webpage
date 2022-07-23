@@ -8,31 +8,35 @@ const path = require('path');
 
 const settings_get = async (req, res) => {
     let user; if (await req.user) {
-        await req.user.then(e => {user = e;})
+        await req.user.then( e => {user = e[0].dataValues} );
+        console.log('user en /create get:>> ', user);
     }
 
     let userId = req.params.userId
 
-    if (user[0].id !== parseInt(userId)) {
+    if (user.id !== parseInt(userId)) {
         req.flash('error','Usuario no permitido para editar');
         res.redirect('back');
         return
     }
 
-    const title = `Configuracion ${user[0].username}`
+    const title = `Configuracion ${user.username}`
 
     res.render('user/settings', {title: title, user:user, success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
 }
 
 const settings_post = async (req, res) => {
-    let user; await req.user.then(e => {user = e;})
+    let user; if (await req.user) {
+        await req.user.then( e => {user = e[0].dataValues} );
+        console.log('user en /create get:>> ', user);
+    }
 
     let userId = req.params.userId;
     console.log('userId :>> ', userId);
 
 
     //Primero se verifica que el usuario sea correcto
-    if (user[0].id !== parseInt(userId)) {
+    if (user.id !== parseInt(userId)) {
         req.flash('error','Usuario no permitido para editar');
         res.redirect('back');
         return
@@ -185,15 +189,6 @@ const settings_post = async (req, res) => {
     res.redirect('back')
 }
 
-/* if (req.body.theme){
-    await models.SettingsEntry.update({value:req.body.theme},{
-        where: {
-            user_id: req.params.id,
-            setting:"theme"
-        }
-    })
-} */
-
 const deleteUser = async (req, res) => {
 
 
@@ -252,16 +247,12 @@ const deleteUser = async (req, res) => {
 }
 
 const userProfile_get = async (req, res) => {
-
-    let user;
     let isUploader = false;
     let userId = req.params.userId;
 
-    if (req.user) {
-        await req.user.then( e => {user = e});
-        if (user[0].id === userId) {
-            isUploader = true;
-        }
+    let user; if (await req.user) {
+        await req.user.then( e => {user = e[0].dataValues} );
+        console.log('user en /create get:>> ', user);
     }
     let userEntry = await models.UserEntry.findByPk(userId);
 
@@ -298,7 +289,10 @@ const userProfile_get = async (req, res) => {
 }
 
 const userProfile_post = async (req, res) => {
-    let user; if (req.user) await req.user.then(e => {user = e[0].dataValues;})
+    let user; if (await req.user) {
+        await req.user.then( e => {user = e[0].dataValues} );
+        console.log('user en /create get:>> ', user);
+    }
 
     let userId = parseInt(req.params.userId);
 
@@ -386,7 +380,10 @@ const userProfile_post = async (req, res) => {
 }
 
 const deleteNetwork = async (req, res) => {
-    let user; await req.user.then(e => {user = e[0].dataValues;})
+    let user; if (await req.user) {
+        await req.user.then( e => {user = e[0].dataValues} );
+        console.log('user en /create get:>> ', user);
+    }
 
     let userId = parseInt(req.params.userId);
     let socialId = parseInt(req.params.socialId);

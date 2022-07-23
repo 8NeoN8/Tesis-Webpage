@@ -86,7 +86,7 @@ textarea{
 .btn-sky{
     background-color: var(--sky-color);
     border-color: var(--neutral-color);
-    color: var(--watermelon-color)
+    color: black
 }
 
 .btn-watermelon{
@@ -96,7 +96,7 @@ textarea{
 }
 
 .btn-carbon{
-    border-color: #A9A9A9;
+    border-color: #a9a9a9;
 }
 
 .btn-neutral:hover{
@@ -161,3 +161,81 @@ textarea{
     50%{background-position:100% 49%}
     100%{background-position:0% 52%}
 }
+
+
+.parallelogram {
+    transform: skew(20deg);
+}
+.parallelogram-reverse {
+    transform: skew(-20deg);
+}
+
+.flag {
+    width: 110px;
+    height: 56px;
+    box-sizing: content-box;
+    padding-top: 15px;
+    position: relative;
+    background: red;
+    color: white;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-align: center;
+    text-transform: uppercase;
+  }
+.flag:after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border-bottom: 13px solid #eee;
+    border-left: 55px solid transparent;
+    border-right: 55px solid transparent;
+  }
+
+  .pointer {
+    position: relative;
+    background: red;
+  }
+  .pointer:after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border-left: 20px solid white;
+    border-top: 20px solid transparent;
+    border-bottom: 20px solid transparent;
+  }
+  .pointer:before {
+    content: "";
+    position: absolute;
+    right: -20px;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border-left: 20px solid red;
+    border-top: 20px solid transparent;
+    border-bottom: 20px solid transparent;
+  }
+
+  .talkbubble {
+    position: relative;
+    -moz-border-radius: 10px;
+    -webkit-border-radius: 10px;
+    border-radius: 10px;
+  }
+  .talkbubble:before {
+    content: "";
+    position: absolute;
+    right: 90%;
+    top: 0px;
+    width: 0;
+    height: 0;
+    border-top: 13px solid transparent;
+    border-right: 26px solid red;
+    border-bottom: 13px solid transparent;
+  }

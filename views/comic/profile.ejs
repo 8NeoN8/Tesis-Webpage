@@ -1,115 +1,133 @@
 <%- include ('../partials/head.ejs') %>
+
 <% if (comic) { %>
 
     <% if (user) { %>
-        <div class="user-buttons-wrappers text-center my-2">
-            <% if (isUploader) { %>
 
-                <button class="btn btn-dark mx-2">
-                    <a class="text-wrap text-break text-light text-decoration-none" href=<%= `/comic/edit/${user[0].id}/${comic.id}` %> id="editComicLink">Editar comic</a>
-                </button>
-
-                <button type="button" class="btn btn-danger mx-2" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                    Eliminar comic
-                </button>
-
-                <form action=<%= `/comic/delete/${comic.comicUploader_id}/${comic.id}` %> id="deleteForm" method="post" hidden>
-                    <h3>¿De verdad quiere borrar este comic?</h3>
-                    <label for="confirmComicDelete">Confirmar con Contraseña:</label><br>
-                    <input type="password" name="confirmComicDelete" id="confirmComicDelete">
-                    <button type="submit">Eliminar</button>
-                </form>
-            <% } %>
-
-            <% if (user.role === 1 || isUploader) { %>
-                <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                              <h5 class="modal-title text-dark" id="exampleModalLabel">¿De verdad quiere borrar este comic?</h5>
-                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <form action=<%= `/comic/delete/${comic.comicUploader_id}/${comic.id}` %> method="post">
-                                    <div class="mb-3">
-                                        <label for="recipient-name" class="col-form-label text-dark">Confirmar con Contraseña:</label>
-                                        <input type="password" class="form-control" id="confirmComicDelete" name="confirmComicDelete">
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                                        <button type="submit" class="btn btn-danger">Eliminar</button>
-                                     </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            <% } %>
-        </div>
     <% } %>
 
-    <div class="container p-0">
-        <div class="comic-info-wrapper container my-md- p-0 d-lg-flex">
-            <div class="text-center">
+    <section class="container mx-auto px-sm-3 py-3 my-5 bg-neutral text-dark rounded border border-1 border-carbon">
+        <!-- Comic Info -->
+        <div class="comic-info-wrapper container  my-md- p-0 d-lg-flex">
+            <div class="text-center border border-watermelon">
                 <img class="img-fluid" style="max-width: 400px;" src="<%= comic.comicCoverPath %>" >
             </div>
-            <div class="bg-info text-center p-2 text-lg-start w-100">
-                <p class="fs-3 text-wrap text-break">
+            <div class="bg-sky text-center p-2 text-lg-start w-100">
+                <p class="h3 text-wrap text-break border-4 border-bottom border-watermelon">
                     <%= comic.comicName %>
                 </p>
-                <% if (comic.comicWriter === uploaderData[0].username) { %>
+                <% if (comic.comicWriter === uploaderData.username) { %>
                     <p class="text-wrap text-break">
-                        <span class="fs-4"> Autor : </span>
-                        <a class="text-warning text-decoration-none" href=<%= `/user/profile/${uploaderData[0].id}` %>>
-                            <%= uploaderData[0].username %>
+                        <span class="fs-4 border-2 border-bottom border-watermelon"> Autor : </span>
+                        <a class="text-watermelon p-1 parallelogram btn btn-watermelon text-decoration-none" href=<%= `/user/profile/${uploaderData.id}` %>>
+                            <span class="d-block parallelogram-reverse"><%= uploaderData.username %></span>
                         </a>
                     </p>
                 <% } else {%>
                     <p class="text-wrap text-break">
-                        <span class="fs-4"> Autor : </span> <%= comic.comicWriter %>
+                        <span class="fs-4 border-2 border-bottom border-watermelon"> Autor : </span> <%= comic.comicWriter %>
                     </p>
                 <% } %>
                 <p class="text-wrap text-break">
-                    <span class="fs-4"> Uploader : </span>
-                    <a class="text-warning text-decoration-none" href=<%= `/user/profile/${uploaderData[0].id}` %>>
-                         <%= uploaderData[0].username %>
+                    <span class="fs-4 border-2 border-bottom border-watermelon"> Uploader : </span>
+                    <a class="text-watermelon p-1 parallelogram btn btn-watermelon text-decoration-none" href=<%= `/user/profile/${uploaderData.id}` %>>
+                        <span class="d-block parallelogram-reverse"><%= uploaderData.username %></span>
                     </a>
                 </p>
                 <p class="text-wrap text-break">
-                   <span class="fs-4"> Categorias :</span> <br>
+                   <span class="fs-4 border-2 border-bottom border-watermelon"> Categorias :</span> <br>
                     <% for( let i = 0; i < categories.length; i++ ) { %>
-                      <span> <%= categories[i] %> </span>
+                      <div class="parallelogram btn btn-neutral">
+                        <span class="d-block parallelogram-reverse"> <%= categories[i] %> </span>
+                      </div>
                     <% } %>
                 </p>
 
-                <p class="text-wrap text-break">
-                    <span class="fs-4"> Estado :</span> <%= comic.comicStatus.replace("-"," ") %>
+                <p class="text-wrap text-break mb-3">
+                    <span class="fs-4 border-2 border-bottom border-watermelon"> Estado :</span> <%= comic.comicStatus.replace("-"," ") %>
                 </p>
 
                 <p class="text-wrap text-break">
-                    <span class="fs-4 d-block border-bottom"> Sinopsis : </span>
+                    <span class="fs-4 d-block border-4 rounded border-bottom border-watermelon"> Sinopsis : </span>
                     <%= comic.comicDescription %>
                 </p>
             </div>
         </div>
+        <!-- Comic Info -->
 
+        <!-- Comic Buttons for users. -like(all) edit&delete(uploader & admin) -->
         <% if (user) { %>
-            <form class="likes-wrapper text-end" action=<%= `/comic/like/${comic.id}/${user.id}/${hasLiked}` %>  method="post">
-                <button class="<% if (hasLiked) { %> btn-secondary <% } else { %> btn-danger <% } %> p-2 m-1 rounded-pill" type="submit">
-                    Me gusta! (<%= likes %>)
-                </button>
-            </form>
-        <% } %>
+            <div class="container d-flex justify-content-between">
+                <div class="user-buttons-wrappers text-center my-2">
+                    <% if (isUploader) { %>
+                        <a class="btn btn-neutral text-break text-dark text-decoration-none" href=<%= `/comic/edit/${user.id}/${comic.id}` %> id="editComicLink">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </a>
 
-        <div class=" chapters-wrapper bg-success container p-0 py-1 overflow-auto text-center" style="max-height: 50vh;">
-            <p class="fs-4 text-center bg-secondary">Lista de Capitulos</p>
+                        <a type="button" class="btn btn-watermelon text-break text-dark text-decoration-none" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </a>
+
+                        <form action=<%= `/comic/delete/${comic.comicUploader_id}/${comic.id}` %> id="deleteForm" method="post" hidden>
+                            <h3>¿De verdad quiere borrar este comic?</h3>
+                            <label for="confirmComicDelete">Confirmar con Contraseña:</label><br>
+                            <input type="password" name="confirmComicDelete" id="confirmComicDelete">
+                            <button type="submit">Eliminar</button>
+                        </form>
+                    <% } %>
+
+                    <% if (user.role === 1 || isUploader) { %>
+                        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                      <h5 class="modal-title text-dark" id="exampleModalLabel">¿De verdad quiere borrar este comic?</h5>
+                                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form action=<%= `/comic/delete/${comic.comicUploader_id}/${comic.id}` %> method="post">
+                                            <div class="mb-3">
+                                                <label for="recipient-name" class="col-form-label text-dark">Confirmar con Contraseña:</label>
+                                                <input type="password" class="form-control" id="confirmComicDelete" name="confirmComicDelete">
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                                <button type="submit" class="btn btn-danger">Eliminar</button>
+                                             </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+
+                <form class="likes-wrapper text-end" action=<%= `/comic/like/${comic.id}/${user.id}/${hasLiked}` %>  method="post">
+                    <button class="btn <% if (hasLiked) { %> btn-secondary <% } else { %> btn-danger <% } %> p-2 m-1 rounded-pill" type="submit">
+                        <% if (hasLiked) { %>
+                            <i class="fa-solid fa-heart-crack">(<%= likes %>)</i>
+                        <% } else {%>
+                            <i class="fa-solid fa-heart">(<%= likes %>)</i>
+                        <% } %>
+                    </button>
+                </form>
+
+            </div>
+        <% } %>
+        <!-- Comic Buttons for users. -like(all) edit&delete(uploader & admin) -->
+
+
+
+        <!-- Chapters -->
+        <div class="bg-watermelon overflow-auto text-center" style="max-height: 50vh;">
+            <p class="h3 m-0 text-center bg-carbon border-2 border-bottom border-neutra">Lista de Capitulos</p>
             <% if (chapters.length>0) { %>
-                <div class="chapter-wrapper m-1 text-center">
+                <div class="text-center">
                     <% for( let i = 0; i < chapters.length; i++ ) { %>
-                        <div class="my-3">
-                            <a class="text-wrap text-break text-light text-decoration-none" href=<%= `/read/${comic.id}/${chapters[i].chapterNumber}/1`  %> > Capitulo <%= chapters[i].chapterNumber %> - <span class="text-capitalize"> <%= chapters[i].chapterTitle %> </span></a>
+                        <div class="mb-3 mt-1">
+                            <a class="text-wrap text-break btn btn-neutral text-decoration-none" href=<%= `/read/${comic.id}/${chapters[i].chapterNumber}/1`  %> > Capitulo <%= chapters[i].chapterNumber %> - <span class="text-capitalize"> <%= chapters[i].chapterTitle %> </span></a>
                             <% if (isUploader) { %>
-                                <a class="text-wrap text-break text-light text-decoration-none rounded-pill p-1 btn-danger" href=<%= `/comic/delete/${user.id}/${comic.id}/${chapters[i].id}` %> id="deleteChapterLink"> Eliminar capitulo</a>
+                                <a class="text-wrap text-break btn btn-watermelon text-decoration-none rounded-pill p-1 btn-danger" href=<%= `/comic/delete/${user.id}/${comic.id}/${chapters[i].id}` %> id="deleteChapterLink"> Eliminar capitulo</a>
                             <% } %>
                         </div>
                     <% } %>
@@ -119,26 +137,12 @@
                 <h3>No hay capitulos actualmente...</h3>
             <% } %>
             <% if (isUploader) { %>
-                <button class="btn btn-info text-center">
-                    <a class="text-wrap text-break text-light text-decoration-none" href=<%= `/comic/upload/${user.id}/${comic.comicName}` %> id="addChapterLink">Agregar capitulo</a>
-                </button>
+                <a class="btn btn-neutral text-center text-wrap text-break text-decoration-none" href=<%= `/comic/upload/${user.id}/${comic.id}` %> id="addChapterLink">
+                    Agregar Capitulo
+                </a>
             <% } %>
         </div>
-    </div>
+        <!-- Chapters -->
+    </section>
 <% } %>
-
-<% if (user) { %>
-    <% if (isUploader || user.role === 1) { %>
-        <script>
-            let deleteComic = document.getElementById('deleteComic');
-            let deleteForm = document.getElementById('deleteForm');
-            deleteComic.addEventListener('click',()=>{
-                console.log('ola');
-                deleteForm.toggleAttribute('hidden')
-            })
-        </script>
-    <% } %>
-<% } %>
-
-
 <%- include ('../partials/footer.ejs') %>

@@ -317,14 +317,11 @@ const profile_get = async (req,res) => {
         order: [['chapterNumber','ASC']]
     })
 
-    let uploaderData = await models.UserEntry.findAll({
-        where:{
-            id: comic.comicUploader_id
-        }
-    })
+    let uploaderData = await models.UserEntry.findByPk(comic.comicUploader_id)
+    uploaderData = uploaderData.dataValues;
 
-    for (let chapter of chapters) {
-        chapter = chapter.dataValues;
+    for (let i = 0; i < chapters.length; i++) {
+        chapters[i] = chapters[i].dataValues;
     }
 
     let categories = comic.comicCategories.split(',');
@@ -350,6 +347,8 @@ const profile_get = async (req,res) => {
             comic_id: comicId
         }
     })
+
+    console.log('liked? :>> ', hasLiked);
 
     res.render('./comic/profile',{ uploaderData:uploaderData,hasLiked:hasLiked, likes:likes, isUploader: uploader, comic:comic, categories: categories, chapters:chapters ,title: comic.comicName, user:user, success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
 }
@@ -434,7 +433,7 @@ const read_get = async (req, res) =>{
     if (user) {
         let Setts = await models.SettingsEntry.findAll({
             where: {
-                user_id: user[0].id,
+                user_id: user.id,
             },
             order: [['createdAt','ASC']]
         })
@@ -494,14 +493,14 @@ const edit_comic_get = async (req, res) => {
         await req.user.then( e => {user = e[0].dataValues} );
         console.log('user en /profile:>> ', user);
     }
-    console.log('username :>> ', user[0].username);
-    if (user[0].id !== parseInt(uploader)) {
+    console.log('username :>> ', user.username);
+    if (user.id !== parseInt(uploader)) {
         req.flash('error','Error. User not allowed to edit');
         res.redirect('/');
         return;
     }
 
-    if (user[0].id === parseInt(uploader)) {
+    if (user.id === parseInt(uploader)) {
         res.render('comic/editComic', {title: 'Edit Comic Entry', user:user, uploaderId:req.params.uploaderId,comicId:req.params.comicId, success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
     }
 }

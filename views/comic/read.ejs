@@ -1,23 +1,29 @@
 <%- include ('../partials/head.ejs') %>
-<section class='container p-0 text-center justify-content-center'>
-    <div class='container p-2 bg-warning position-relative' id="imgContainer">
-        <img id="mainImg" class='border border-light p-1 img-fluid mx-auto' src="<%= chapterPath+'/'+files[currentPage-1] %> ">
+<section class='container p-0 text-center justify-content-center border border-info border-4'>
+    <div class='container p-2 bg-carbon position-relative' id="imgContainer">
+        <img id="mainImg" class='border border-light img-fluid mx-auto' src="<%= chapterPath+'/'+files[currentPage-1] %>">
         <div id="filter"></div>
     </div>
-    <div class="my-3 p-2 d-flex bg-info text-light overflow-auto justify-content-center" style="max-height: 200px;">
+    <div class="bg-watermelon p-2 d-flex d-lg-block overflow-auto justify-content-center border-2 border-top border-watermelon">
         <% if (!user) { %>
-            <button class="btn btn-dark mx-auto" id="prevBtn">
-                <a id="prevLink" href="#mainImg" class="nav-link disabled" onclick="goToAnchor('mainImg')">Anterior</a>
-            </button>
-            <div class=" mx-1 d-flex w-50 text-center justify-content-center" id="goToForm style="max-height: 100px;"">
-                <input type="number" name="goToInput" id="goToInput" class="w-100"  min="1" max=<%= amountPages %>>
-                <button class="btn btn-dark d-block" id="goToBtn" class="">
-                    <a class="nav-link disabled fs-5 text-light" id="goToLink" href="#mainImg" onclick="goToAnchor('mainImg')">Ir</a>
+            <div class="p-2 d-md-flex">
+                <a class='btn btn-neutral' href=<%= `/read/${comic.id}` %>> Perfil </a>
+                <button class="mx-auto btn btn-neutral" id="prevBtn">
+                    <a id="prevLink" href="#mainImg" class="nav-link disabled" onclick="goToAnchor('mainImg')">Anterior</a>
                 </button>
+                <div class=" mx-1 d-flex  text-center justify-content-center" id="goToForm style="max-height: 100px;"">
+                    <input type="number" name="goToInput" id="goToInput" class="w-100"  min="1" max=<%= amountPages %>>
+                    <button class="btn btn-dark d-block" id="goToBtn" class="">
+                        <a class="nav-link disabled fs-5 text-light" id="goToLink" href="#mainImg" onclick="goToAnchor('mainImg')">Ir</a>
+                    </button>
+                </div>
+                <button class="mx-auto btn btn-neutral" id="nextBtn">
+                    <a id="nextLink" href="#mainImg" class="nav-link disabled" onclick="goToAnchor('mainImg')">Siguiente</a>
+                </button>
+                <a class="btn btn-neutral" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                    Opciones
+                </a>
             </div>
-            <button class=" mx-auto btn btn-dark" id="nextBtn">
-                <a id="nextLink" href="#mainImg" class="nav-link disabled" onclick="goToAnchor('mainImg')">Siguiente</a>
-            </button>
         <% } %>
 
         <% if (user) { %>
@@ -35,27 +41,11 @@
             </button>
         <% } %>
     </div>
-
-    <div class="bg-danger p-1 d-flex justify-content-center text-center">
-        <a class='nav-link btn btn-dark text-decoration-none text-light mx-auto' href=<%= `/read/${comic.id}` %>> Perfil </a>
-        <% if (!user) { %>
-            <button type="button" class="btn btn-dark mx-auto" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                Opciones
-              </button>
-        <% } %>
-    </div>
-
 </section>
 
-<% if (!user) { %>
-
-<% } %>
-
 <!-- Button trigger modal-->
-
-
    <!-- Modal -->
-  <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content bg-dark text-light">
         <div class="modal-header">
@@ -113,54 +103,54 @@
         </div>
       </div>
     </div>
-  </div>
+</div>
 
 
-<section class="bg-success container p-0 my-2" id="comments">
+<!-- Comentarios -->
+
+<section class="bg-neutral container p-0 my-2" id="comments">
     <% if (user) { %>
         <form class="commentPost" action=<%= Url %> method="post">
-            <label for="commentText">Escribe un commentario!</label>
+            <label for="commentText">Escribe un comentario!</label>
             <br>
             <textarea class="commentText" name="commentText" id="commentText" cols="50" rows="3"></textarea>
             <button type="submit">Comentar</button>
         </form>
     <% } else {%>
-        <p class="fs-6 text-center my-2 rounded rounded-pill p-1 bg-warning text-light">Inicia sesion para escribir un commentario!</p>
+        <p class="fs-6 text-center my-2 rounded rounded-pill p-1 bg-carbon text-light">Inicia sesion para escribir un comentario!</p>
     <% } %>
 
-    <div class="text-center justify-content-center py-2">
-        <% if (comments.length > 0) { %>
-            <button id="toggleComments" class="p-1 btn-primary">Comentarios</button>
-            <div class="comment-container" id="comment-container" hidden>
-                <% for( let i = 0; i < comments.length; i++ ) { %>
-                    <div class="m-2 p-2 bg-dark text-light w-100 rounded rounded-pill">
-                        <p class="text-wrap text-break"><%= comments[i].username %> </p>
-                        <p><%= comments[i].commentText %> </p>
-                        <div class="comment-options d-flex">
-                            <% if (user && (comments[i].user_id === user[0].id || user.role === 1)) { %>
-                                <form action=<%= `/comic/deleteComment/${comments[i].id}`%>  method="post">
-                                    <button class="p-1" type="submit">Eliminar comentario</button>
-                                </form>
-                            <% } %>
-                        </div>
-                    </div>
-                <% } %>
+
+
+    <% if (comments.length > 0) { %>
+        <div class="text-center">
+            <button class="btn btn-watermelon h5 my-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                Comentarios
+            </button>
+        </div>
+        <div class="collapse" id="collapseExample">
+            <div class="card card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <% for( let i = 0; i < comments.length; i++ ) { %>
+                            <div class="bg-watermelon text-neutral p-1">
+                                <p class="text-wrap text-break border-bottom border-sky"><%= comments[i].username %>: </p>
+                                <p class="text-wrap text-break border-bottom border-sky"><%= comments[i].commentText %> </p>
+                                <div class="comment-options d-flex">
+                                    <% if (user && (comments[i].user_id === user.id || user.role === 1)) { %>
+                                        <form action=<%= `/comic/deleteComment/${comments[i].id}`%>  method="post">
+                                            <button class="p-1" type="submit">Eliminar comentario</button>
+                                        </form>
+                                    <% } %>
+                                </div>
+                            </div>
+                        <% } %>
+                    </li>
+                </ul>
             </div>
-        <% } %>
-    </div>
+        </div>
+    <% } %>
 </section>
-
-<% if (comments.length > 0) { %>
-    <script>
-        let toggleComments = document.getElementById('toggleComments');
-        let commentContainer = document.getElementById('comment-container');
-
-        toggleComments.addEventListener('click',()=>{
-            commentContainer.toggleAttribute('hidden');
-        })
-
-    </script>
-<% } %>
 
 <script>
 

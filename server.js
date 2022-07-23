@@ -1,8 +1,9 @@
 //Llamando modulos para el funcionamiento del servidor
 const express = require('express');
 const morgan = require('morgan');
-const userRoutes = require('./routes/userRoutes')
-const comicRoutes = require('./routes/comicRoutes')
+const userRoutes = require('./routes/userRoutes');
+const comicRoutes = require('./routes/comicRoutes');
+const pdfRoutes = require('./routes/pdfRoutes');
 const flash = require('connect-flash');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
@@ -375,10 +376,13 @@ app.get('/read/:comicId/:chapter/:page', controller.read_get);
 app.post('/read/:comicId/:chapter/:page', controller.read_post);
 
 //Enrutamiento de procesos de comics
-app.use('/comic', comicRoutes)
+app.use('/comic', comicRoutes);
 
 //Enrutamiento de precesos de  Usuarios
-app.use('/user', userRoutes)
+app.use('/user', userRoutes);
+
+//Enrutamiento de Reportes
+app.use('/makePdf', pdfRoutes);
 
 //Pagina 404 No Encontrado
 app.use((req,res)=>{

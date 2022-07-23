@@ -3,21 +3,40 @@
 <% if (user) { %>
     <% console.log(user.role); %>
     <% if (user.role === 1) { %>
-        <div class="position-relative " style="width: 100%;">
-            <h1 style="text-align:center;">Usuarios registrados</h1>
-            <% if (users.length > 0) { %>
-                <div class="user p-2 bg-dark">
-                    <% users.forEach(user => { %>
-                        <h4 class="text-light"><%= user.name %> </h4>
-                        <h4 class="text-light"><%= user.email %> </h4>
-                        <a href="/user/deleteUser/<%= user.id %> class="text-light"">deleteUser</a>
-                        <a href="/user/editUser/<%= user.id %> class="text-light"">editUser</a>
-                    <% }) %>
+        <h1 class="text-center bg-carbon">
+            <button class="btn btn-sky fs-3 my-3">
+                Opciones de Administrador
+            </button>
+        </h1>
+        <div class="bg-neutral d-flex my-3 p-2" id="admin-options" style="width: 100%;">
+
+            <div class="w-100 mx-auto px-1" id="registered-users">
+                <h1 class="text-center bg-watermelon text-neutral">Usuarios registrados</h1>
+                <% if (users.length > 0) { %>
+                    <div class="p-2 bg-dark text-sky">
+                        <% users.forEach(user => { %>
+                            <h4 class=""><%= user.name %> </h4>
+                            <h4 class=""><%= user.email %> </h4>
+                            <a href="/user/deleteUser/<%= user.id %> class="text-light"">deleteUser</a>
+                            <a href="/user/editUser/<%= user.id %> class="text-light"">editUser</a>
+                        <% }) %>
+                    </div>
+                <% }else {%>
+                    <h3>No hay usuarios registrados</h3>
+                <% } %>
+            </div>
+
+            <div class="w-100 mx-auto px-1" id="pdf-reports">
+                <h1 class="text-center bg-watermelon text-neutral">Hacer Reportes</h1>
+                <div class="d-flex flex-column mt-3">
+                    <a href="/makePdf/UsersReport.pdf" target="_blank" class="btn btn-watermelon btn-big mb-3">Reporte de Usuarios</a>
+                    <a href="/makePdf/ComicsReport.pdf" target="_blank" class="btn btn-watermelon btn-big mb-3">Reporte de Comics</a>
+                    <a href="/makePdf/CommentsReport.pdf" target="_blank" class="btn btn-watermelon btn-big mb-3">Reporte de Comentarios</a>
                 </div>
-            <% }else {%>
-                <h3>No hay usuarios registrados</h3>
-            <% } %>
+            </div>
         </div>
+
+
     <% } %>
 <% } %>
 
