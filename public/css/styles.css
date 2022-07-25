@@ -10,6 +10,7 @@
     --neutral-color:#EFEFEF;
     --carbon-color:#A9A9A9;
     --watermelon-color:#FF3B3F;
+    --jet-color: #343434;
 }
 
 textarea{
@@ -40,6 +41,10 @@ textarea{
     background-color: #A9A9A9;
 }
 
+.bg-jet{
+    background-color: var(--jet-color);
+}
+
 .text-neutral{
     color: #EFEFEF;
 }
@@ -54,6 +59,9 @@ textarea{
 
 .text-carbon{
     color: #A9A9A9;
+}
+.text-jet{
+    color: var(--jet-color);
 }
 
 .border-neutral{
@@ -70,6 +78,9 @@ textarea{
 
 .border-carbon{
     border-color: solid var(--carbon-color) !important;
+}
+.irderg-jet{
+    border-color: solid var(--jet-color) !important;
 }
 
 .btn-neutral{
@@ -239,3 +250,6 @@ textarea{
     border-right: 26px solid red;
     border-bottom: 13px solid transparent;
   }
+
+
+

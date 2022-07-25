@@ -11,8 +11,7 @@ const fs = require('fs');
 //En este caso, si se desea cambiar de imagen de perfil de usuario
 const storageSetting = multer.diskStorage({
     destination:async function(req,response,done){
-        let user; await req.user.then(e => {user = e;})
-        user = user[0].dataValues
+        let user; await req.user.then(e => {user = e.datavalues;})
         let user_id = req.params.userId;
         user = await models.UserEntry.findByPk(user_id);
         console.log('params :>> ', req.params);
@@ -52,8 +51,7 @@ const storageSetting = multer.diskStorage({
     },
     filename:async function (req,file,done){
         //Aqui se denomina el nombre de la imagen
-        let user; await req.user.then(e => {user = e;})
-        user = user[0].dataValues
+        let user; await req.user.then(e => {user = e.dataValues;})
         let user_id = req.params.userId;
         user = await models.UserEntry.findByPk(user_id);
 

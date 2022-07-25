@@ -1,33 +1,33 @@
 <%- include ('../partials/head.ejs') %>
-<section class='container p-0 text-center justify-content-center border border-info border-4'>
-    <div class='container p-2 bg-carbon position-relative' id="imgContainer">
-        <img id="mainImg" class='border border-light img-fluid mx-auto' src="<%= chapterPath+'/'+files[currentPage-1] %>">
-        <div id="filter"></div>
+<section class='container p-0 text-center justify-content-center'>
+    <div class='container bg-carbon position-relative' id="imgContainer">
+        <img id="mainImg" class=' img-fluid mx-auto' src="<%= chapterPath+'/'+files[currentPage-1] %>">
+        <div id="imgBtns" class=""> &nbsp;</div>
+        <div id="filter" class=""> &nbsp;</div>
     </div>
     <div class="bg-watermelon p-2 d-flex d-lg-block overflow-auto justify-content-center border-2 border-top border-watermelon">
-        <% if (!user) { %>
-            <div class="p-2 d-md-flex">
-                <a class='btn btn-neutral' href=<%= `/read/${comic.id}` %>> Perfil </a>
-                <button class="mx-auto btn btn-neutral" id="prevBtn">
-                    <a id="prevLink" href="#mainImg" class="nav-link disabled" onclick="goToAnchor('mainImg')">Anterior</a>
+        <div class="p-2 d-flex">
+            <a class='btn btn-neutral' href=<%= `/read/${comic.id}` %>> Perfil </a>
+            <button class="mx-auto btn btn-neutral" id="prevBtn">
+                <a id="prevLink" href="#mainImg" class="nav-link disabled" onclick="goToAnchor('mainImg')">Anterior</a>
+            </button>
+            <div class="mx-1 d-flex  text-center justify-content-center" id="goToForm style="max-height: 100px;"">
+                <input type="number" name="goToInput" id="goToInput" class="w-100"  min="1" max=<%= amountPages %>>
+                <button class="btn btn-dark d-block" id="goToBtn" class="">
+                    <a class="nav-link disabled fs-5 text-light" id="goToLink" href="#mainImg" onclick="goToAnchor('mainImg')">Ir</a>
                 </button>
-                <div class=" mx-1 d-flex  text-center justify-content-center" id="goToForm style="max-height: 100px;"">
-                    <input type="number" name="goToInput" id="goToInput" class="w-100"  min="1" max=<%= amountPages %>>
-                    <button class="btn btn-dark d-block" id="goToBtn" class="">
-                        <a class="nav-link disabled fs-5 text-light" id="goToLink" href="#mainImg" onclick="goToAnchor('mainImg')">Ir</a>
-                    </button>
-                </div>
-                <button class="mx-auto btn btn-neutral" id="nextBtn">
-                    <a id="nextLink" href="#mainImg" class="nav-link disabled" onclick="goToAnchor('mainImg')">Siguiente</a>
-                </button>
-                <a class="btn btn-neutral" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                    Opciones
-                </a>
             </div>
-        <% } %>
+            <button class="mx-auto btn btn-neutral" id="nextBtn">
+                <a id="nextLink" href="#mainImg" class="nav-link disabled" onclick="goToAnchor('mainImg')">Siguiente</a>
+            </button>
+            <a class="btn btn-neutral" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                Opciones
+            </a>
+        </div>
+
 
         <% if (user) { %>
-            <button class="btn btn-dark" id="prevBtn">
+            <!-- <button class="btn btn-dark" id="prevBtn">
                 <a href="#mainImg" class="nav-link <% if (settings.jumpOnPageTurn !== "imgTop") { %> disabled <% } %>" onclick="goToAnchor('mainImg')">Anterior</a>
             </button>
             <div class=" mx-1 border border-danger d-flex w-50 text-center justify-content-center" id="goToForm style="max-height: 100px;"">
@@ -38,7 +38,7 @@
             </div>
             <button class="btn btn-dark" id="nextBtn">
                 <a href="#mainImg" class="nav-link <% if (settings.jumpOnPageTurn !== "imgTop") { %> disabled <% } %>" onclick="goToAnchor('mainImg')">Siguiente</a>
-            </button>
+            </button> -->
         <% } %>
     </div>
 </section>
@@ -47,74 +47,76 @@
    <!-- Modal -->
 <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-      <div class="modal-content bg-dark text-light">
-        <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLabel">Opciones de Comic</h5>
+      <div class="modal-content bg-neutral text-light px-1">
+        <div class="modal-header border-bottom border-watermelon">
+          <h5 class="modal-title text-jet" id="exampleModalLabel">Opciones de Comic</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-            <form class="container bg-dark text-light" action="" method="post">
-                <label for="pageTurn">Botones en imagen</label>
-                <br>
-                <select name="pageTurn" id="pageTurn">
+            <form class="container bg-jet text-neutral" <% if (user) { %> action=<%= `/user/settings/${user.id}` %> <% } %> method="post">
+                <label class="form-label" for="pageTurn">Botones en imagen</label>
+
+                <select class="form-select" name="pageTurn" id="pageTurn">
+                    <option selected></option>
                     <option value="lr"> izquierda-Derecha </option>
                     <option value="rl">Derecha-Izquierda</option>
-                    <option value="ud">Arriba-Abajo</option>
-                    <option value="du">Abajo-Arriba</option>
                 </select>
-                <br>
-                <br>
 
-                <label for="jumpPage">Saltar al cambiar de pagina</label>
-                <select name="jumpPage" id="jumpPage">
-                    <option value="nojump" selected>No Saltar</option>
+                <label class="form-label" for="jumpPage">Saltar al cambiar de pagina</label>
+                <select class="form-select" name="jumpPage" id="jumpPage">
+                    <option selected></option>
+                    <option value="nojump">No Saltar</option>
                     <option value="imgTop">Tope de imagen</option>
                 </select>
-                <br>
-                <br>
 
                 <div class="colorfilter">
-                    <label for="colorFilter">Filtros</label>
-                    <select name="colorFilter" id="colorFilter">
+                    <label class="form-label" for="colorFilter">Filtros</label>
+                    <select class="form-select" name="colorFilter" id="colorFilter">
+                        <option selected></option>
                         <option value="#ffae00">Naranja</option>
                         <option value="#00d9ff">Celeste</option>
                         <option value="#000000">Negro</option>
                         <option value="#a1723b">Marron</option>
                         <option value="custom">Personalizado</option>
                     </select>
-                    <br>
-                    <div class="customColor" id="customDiv" hidden>
-                        <label for="customColor">ColorPersonalizado</label>
-                        <input type="color" name="customColor" id="customColor" value="#ffffff">
+
+                    <div class="mb-3" class="customColor" id="customDiv" hidden>
+                        <label class="form-label" for="customColor">ColorPersonalizado</label>
+                        <input class="form-control form-control-color" type="color" name="customColor" id="customColor" value="#ffffff">
                     </div>
-                    <br>
-                    <label for="filterOnOf">Aplicar filtro?</label>
-                    <label for="filterOn">Si</label>
-                    <input type="radio" name="filterOnOff" id="filterOn" value="on">
-                    <label for="filterOff">No</label>
-                    <input type="radio" name="filterOnOff" id="filterOff" value="off" checked="checked">
+
+                    <label class="form-label" for="filterOnOf">Aplicar filtro?</label>
+                    <label class="form-label" for="filterOn">Si</label>
+                    <input class="form-check-input" type="radio" name="filterOnOff" id="filterOn" value="on">
+                    <label class="form-label" for="filterOff">No</label>
+                    <input class="form-check-input" type="radio" name="filterOnOff" id="filterOff" value="off"<% if (!user) { %>
+                        checked="checked"
+                    <% } %> >
                 </div>
-                <br>
+                <div class="modal-footer">
+                    <% if (!user) { %>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <% } %>
+                    <% if (user) { %>
+                          <button type="submit" class="btn btn-success">Save changes</button>
+                    <% } %>
+                  </div>
+                </div>
             </form>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-          <button type="button" class="btn btn-primary">Save changes</button>
-        </div>
-      </div>
     </div>
 </div>
 
 
 <!-- Comentarios -->
 
-<section class="bg-neutral container p-0 my-2" id="comments">
+<section class="bg-neutral container justify-content-center mx-auto my-2" id="comments">
     <% if (user) { %>
         <form class="commentPost" action=<%= Url %> method="post">
             <label for="commentText">Escribe un comentario!</label>
             <br>
             <textarea class="commentText" name="commentText" id="commentText" cols="50" rows="3"></textarea>
-            <button type="submit">Comentar</button>
+            <button class="btn btn-sky" type="submit">Comentar</button>
         </form>
     <% } else {%>
         <p class="fs-6 text-center my-2 rounded rounded-pill p-1 bg-carbon text-light">Inicia sesion para escribir un comentario!</p>
@@ -128,18 +130,22 @@
                 Comentarios
             </button>
         </div>
-        <div class="collapse" id="collapseExample">
-            <div class="card card-body">
+        <div class="collapse bg-watermelon" id="collapseExample">
+            <div class="card card-body bg-watermelon text-jet">
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
                         <% for( let i = 0; i < comments.length; i++ ) { %>
-                            <div class="bg-watermelon text-neutral p-1">
-                                <p class="text-wrap text-break border-bottom border-sky"><%= comments[i].username %>: </p>
-                                <p class="text-wrap text-break border-bottom border-sky"><%= comments[i].commentText %> </p>
+                            <div class="bg-neutral text-jet">
+                                <p class="text-wrap text-break border-bottom border-watermelon p-2">
+                                    <%= comments[i].username %>:
+                                </p>
+                                <p class="text-wrap text-break p-2">
+                                    <%= comments[i].commentText %>
+                                </p>
                                 <div class="comment-options d-flex">
                                     <% if (user && (comments[i].user_id === user.id || user.role === 1)) { %>
                                         <form action=<%= `/comic/deleteComment/${comments[i].id}`%>  method="post">
-                                            <button class="p-1" type="submit">Eliminar comentario</button>
+                                            <button class="btn btn-watermelon" type="submit">Eliminar comentario</button>
                                         </form>
                                     <% } %>
                                 </div>
@@ -288,13 +294,13 @@
     if(parseInt(currentPage) === 1){
         if(!prevBtn.hasAttribute('disabled')){
             prevBtn.toggleAttribute('disabled');
-            imgBtnPrev.toggleAttribute('disabled');
+            //imgBtnPrev.toggleAttribute('disabled');
         }
     }
     if(parseInt(currentPage) === parseInt(amountPages)){
         if(!nextBtn.hasAttribute('disabled')){
             nextBtn.toggleAttribute('disabled');
-            imgBtnNext.toggleAttribute('disabled');
+            //imgBtnNext.toggleAttribute('disabled');
         }
     }
 
@@ -470,6 +476,25 @@
 
 <% if (user) { %>
     <script>
+
+        pageTurnDirection = '<%- JSON.stringify(settings.pageTurnDirection) %>'
+        pageTurnDirection = pageTurnDirection.replaceAll('"','')
+        jumpOnPageTurn = '<%- JSON.stringify(settings.jumpOnPageTurn) %>'
+        jumpOnPageTurn = jumpOnPageTurn.replaceAll('"','')
+        colorFilter = '<%- JSON.stringify(settings.colorFilter) %>'
+        colorFilter = colorFilter.replaceAll('"','')
+        filterOnOff = '<%- JSON.stringify(settings.filterOnOff) %>'
+        filterOnOff = filterOnOff.replaceAll('"','')
+
+        let settings = {
+            pageTurnDirection: pageTurnDirection,
+            jumpOnPageTurn: jumpOnPageTurn,
+            colorFilter: colorFilter,
+            filterOnOff: filterOnOff,
+        }
+        console.log('settings :>> ', settings);
+
+
         imgBtnPrev.style.height = `${mainImg.clientHeight}px`
         imgBtnPrev.style.width = `${mainImg.clientWidth/2}px`
         imgBtnNext.style.height = `${mainImg.clientHeight}px`
@@ -482,78 +507,57 @@
         imgBtnPrev.classList.add('top-50')
         imgBtnPrev.classList.add('start-0')
 
-        imgBtnPrev.style.zIndex = 3
-        imgBtnNext.style.zIndex = 3
-        imgLinkPrev.style.zIndex = 3
-        imgLinkNext.style.zIndex = 3
+        imgBtnPrev.style.zIndex = 300
+        imgBtnNext.style.zIndex = 300
+
+        /* imgLinkPrev.style.zIndex = 3
+        imgLinkNext.style.zIndex = 3 */
 
         mainImg.addEventListener('load',()=>{
-            if('<%= settings.pageTurnDirection %>' === "lr" || '<%= settings.pageTurnDirection %>' === "rl"){
+            if(settings.pageTurnDirection === "lr" || settings.pageTurnDirection === "rl"){
                 imgBtnPrev.style.height = `${mainImg.clientHeight}px`
                 imgBtnPrev.style.width = `${mainImg.clientWidth/2}px`
                 imgBtnNext.style.height = `${mainImg.clientHeight}px`
                 imgBtnNext.style.width = `${mainImg.clientWidth/2}px`
 
-                imgLinkPrev.style.height = `${mainImg.clientHeight}px`
+                /* imgLinkPrev.style.height = `${mainImg.clientHeight}px`
                 imgLinkPrev.style.width = `${mainImg.clientWidth/2}px`
                 imgLinkNext.style.height = `${mainImg.clientHeight}px`
-                imgLinkNext.style.width = `${mainImg.clientWidth/2}px`
+                imgLinkNext.style.width = `${mainImg.clientWidth/2}px` */
             }
 
-            if('<%= settings.pageTurnDirection %>' === "ud" || '<%= settings.pageTurnDirection %>' === "du"){
-                imgBtnPrev.style.height = `${mainImg.clientHeight/2}px`
-                imgBtnPrev.style.width = `${mainImg.clientWidth}px`
-                imgBtnNext.style.height = `${mainImg.clientHeight/2}px`
-                imgBtnNext.style.width = `${mainImg.clientWidth}px`
 
-                imgLinkPrev.style.height = `${mainImg.clientHeight/2}px`
-                imgLinkPrev.style.width = `${mainImg.clientWidth}px`
-                imgLinkNext.style.height = `${mainImg.clientHeight/2}px`
-                imgLinkNext.style.width = `${mainImg.clientWidth}px`
-            }
-
-            if('<%= settings.pageTurnDirection %>' === "lr"){
+            if(settings.pageTurnDirection === "lr"){
                 imgBtnPrev.classList.remove('end-0')
                 imgBtnNext.classList.remove('start-0')
                 imgBtnPrev.classList.add('start-0')
                 imgBtnNext.classList.add('end-0')
             }
-            if('<%= settings.pageTurnDirection %>' === "rl"){
+            if(settings.pageTurnDirection === "rl"){
                 imgBtnPrev.classList.remove('start-0')
                 imgBtnNext.classList.remove('end-0')
                 imgBtnPrev.classList.add('end-0')
                 imgBtnNext.classList.add('start-0')
             }
 
-            if('<%= settings.pageTurnDirection %>' === "ud"){
-                imgBtnPrev.classList.add('top-0')
-                imgBtnPrev.classList.remove('top-50')
-
-                imgBtnNext.classList.add('top-50')
-                imgBtnNext.classList.remove('top-0')
-            }
-            if('<%= settings.pageTurnDirection %>' === "du"){
-                imgBtnNext.classList.add('top-0')
-                imgBtnNext.classList.remove('top-50')
-
-                imgBtnPrev.classList.add('top-50')
-                imgBtnPrev.classList.remove('top-0')
-            }
-            if('<%= settings.filterOnOff %>' === "on"){
-                filterColor = '<%= settings.colorFilter %>'
-                console.log(filterColor);
+            if(settings.filterOnOff === "off"){
+                filterColor = settings.colorFilter
+                console.log("aqui esta",filterColor);
+                filter.style = ""
                 filter.style=`width: ${mainImg.clientWidth}px; height: ${mainImg.clientHeight}px; position: absolute; opacity: 0.3; background-color: ${filterColor}; z-index: 2; top:0; left:${(mainImg.offsetLeft)}px`
 
             }
 
             window.addEventListener('resize',()=>{
-                if('<%= settings.filterOnOff %>' === "on"){
+                if(settings.filterOnOff === "on"){
                     filter.style = ""
                     filter.style=`width: ${mainImg.clientWidth}px; height: ${mainImg.clientHeight}px; position: absolute; opacity: 0.3; background-color: ${filterColor}; z-index: 2; top:0; left:${(mainImg.offsetLeft)}px`
 
                 }
             })
 
+            mainImg.appendChild(imgBtnPrev)
+            mainImg.appendChild(imgBtnNext)
         })
 
     </script>
@@ -676,8 +680,7 @@
                 }else filterColor = ""
             }
             if(filterOn.checked){
-                filter.style = ""
-                filter.style=`width: ${mainImg.clientWidth}px; height: ${mainImg.clientHeight}px; position: absolute; opacity: 0.3; background-color: ${filterColor}; z-index: 100; top:0; left:${(mainImg.offsetLeft)}px`
+
             }
         })
         customColor.addEventListener('change',()=>{

@@ -1,35 +1,63 @@
 <%- include ('../partials/head.ejs') %>
 
-<form class="d-flex" action="/search/" method="post">
-    <select name="cats" id="cats">
-    </select>
-    <input class="form-control me-2" type="text" placeholder="Search for a comic" aria-label="Search" name="comicSearch" id="comicSearch">
-    <button class="btn btn-outline-success" type="submit">Buscar</button>
-</form>
-<% if (comics.length > 0) { %>
-    <% for( let i = 0; i < comics.length; i++ ) { %>
-        <div class="comic_block_wrapper bg-secondary p-2">
-            <div class="bg-dark p-2">
-                <a href=<%= `/read/${comics[i].id}` %>>
-                    <img src="<%= comics[i].comicCoverPath %>" width="100px" height="100px">
-                    <h3>title: <%= comics[i].comicName %></h3>
-                    <h3>Author: <%= comics[i].comicWriter %></h3>
-                    <h3>Status: <%= comics[i].comicStatus %></h3>
-                </a>
-            </div>
-        </div>
-    <% } %>
-<% } %>
 
-<% if (comics.length <= 0) { %>
-    <h1>Wow! No hay comics disponibles!</h1>
-<% } %>
+<section class="container bg-neutral">
+    <form class="d-flex row justify-content-center py-2" action="/search/" method="post">
+        <div class="col-12 col-sm-4">
+            <select class="form-select" name="cats" id="cats">
+            </select>
+        </div>
+        <div class="col-12 col-sm-6">
+            <input class="form-control w-100" type="text" placeholder="Search for a comic" aria-label="Search" name="comicSearch" id="comicSearch">
+        </div>
+
+        <div class="col-12 col-sm-1 text-center">
+            <button class="btn btn-big btn-success" type="submit">Buscar</button>
+        </div>
+    </form>
+    <div class="mb-3 bg-watermelon py-2 container">
+        <% if (comics.length > 0) { %>
+
+            <% for( let i = 0; i < comics.length; i++ ) { %>
+
+                <div class="container mx-auto px-sm-3 py-3 my-5 bg-neutral text-dark d-flex border border-carbon ">
+                    <div class="form-group col-sm-4 col-lg-4 text-center justify-content-center d-flex flex-column">
+                        <a href="/read/<%= comics[i].id %>">
+                            <img class="d-inline-block img-fluid border border-watermelon rounded" style="max-height: 200px;" src="<%= comics[i].comicCoverPath %> ">
+                        </a>
+                    </div>
+                    <div class="form-group col-sm-8 col-lg-8 bg-sky rounded">
+                        <div class="d-block text-decoration-none">
+                            <div class="h5 bg-neutral rounded border-bottom border-start border-watermelon border-opacity-25 border-3 mb-2 p-2"><%= comics[i].comicName %> </div>
+                            <p class="text-wrap text-break ps-1">
+                                <span class="fs-5 border-2 border-bottom border-watermelon"> Autor : </span> <%= comics[i].comicWriter.replace("-"," ") %>
+                            </p>
+
+                            <p class="text-wrap text-break ps-1">
+                                <span class="fs-5 border-2 border-bottom border-watermelon"> Estado :</span> <%= comics[i].comicStatus.replace("-"," ") %>
+                            </p>
+                            <p class="text-wrap text-break ps-1">
+                                <span class="fs-5 border-2 border-bottom border-watermelon"> Frecuencia de Publicacion :</span> <%= comics[i].comicSchedule.replace("-"," ") %>
+                            </p>
+
+
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+        <% } else {%>
+            <div class="text-center p-3 d-flex justify-content-around">
+                <div class="h1 border-bottom border-watermelon py-2 ">Ow, parece que no hay ningun comic :(</div>
+            </div>
+        <% } %>
+    </div>
+</section>
 
 <script>
     catAmount = 0;
     let cats = document.getElementById('cats')
 
-    let catGroup = ["---","acción","comedia","misterio","aventura","drama","terror","fantasia","romance","vida-escolar","vida-cotidiana","ciencia-ficcion","deportes","maduro","crimen","psicologico","artes-marciales"]
+    let catGroup = ["---","acción","comedia","misterio","aventura","drama","terror","fantasia","romance","vida-escolar","vida-cotidiana","ciencia-ficcion","deportes","maduro","crimen","psicologico","artes-marciales","superheroes","juvenil"]
 
     cats.addEventListener('load',createCats())
 

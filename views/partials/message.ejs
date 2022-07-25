@@ -1,11 +1,20 @@
 <% if(message && message.length >0) { %>
-    <h3 style="color: white; background-color:blue;"> <%= message %> </h3>
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <strong><%= message %></strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 <% } %>
 
 <% if(success && success.length >0) { %>
-    <h3 style="color: white; background-color:limegreen;"> <%= success %> </h3>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <strong><%= success %></strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 <% } %>
 
 <% if(error && error.length >0) { %>
-    <h3 style="color: white; background-color:red;"> <%= error %> </h3>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong><%= error %></strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 <% } %>

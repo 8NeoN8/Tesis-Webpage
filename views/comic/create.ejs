@@ -1,69 +1,113 @@
 <%- include ('../partials/head.ejs') %>
-<h1>Create comic entry</h1>
 
-<h3 class="bg-danger text-light">AVISO: si las imagenes no estan ordenadas en el formato "pag(numero).(extension)" no sera validad la subida</h3>
-
-<form action="/comic/create" method="post" enctype="multipart/form-data" class="p-3 bg-dark text-light">
-
-    <div class="form-group m-2">
-        <label for="comicName">Nombre/Titulo</label>
-        <input type="text" name="comicName" id="comicName" required>
+<section class="container bg-neutral">
+    <div class="h4 py-2 m-5 text-watermelon border-bottom border-watermelon">
+        Registrar un Comic
     </div>
 
-    <div class="form-group m-2">
-        <label for="comicDescription">Descripción</label><br>
-        <textarea type="text" name="comicDescription" id="comicDescription" cols="50" rows="4" required></textarea>
+    <div class="text-center">
+        <button class="btn btn-watermelon h5" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+            Instrucciones
+        </button>
     </div>
-    <div class="form-group m-2">
-        <label for="CoverImage">Imagen de Portada</label>
-        <input type="file" name="CoverImage" id="CoverImage" accept="image/*" required>
-    </div>
-    <div class="form-group m-2">
-        <label for="comicStart">Fecha de Inicio</label>
-        <input type="date" name="comicStart" id="comicStart">
-    </div>
-    <div class="form-group m-2">
-        <label for="comicSchedule">Frecuencia de Publicación</label>
-        <select  name="comicSchedule" id="comicSchedule">
-            <option value="Terminado">Terminado</option>
-            <option value="Semanal">Semanal</option>
-            <option value="Bisemanal">Bisemanal</option>
-            <option value="Trisemanal">Trisemanal</option>
-            <option value="Mensual">Mensual</option>
-            <option value="BiMensual">BiMensual</option>
-            <option value="TriMensual">TriMensual</option>
-        </select>
-    </div>
-    <div class="form-group m-2">
-        <label for="comicStatus">Estado de publicacion</label>
-        <select name="comicStatus" id="comicStatus">
-            <option value="En-emision">En emision</option>
-            <option value="Hiatus">Hiatus</option>
-            <option value="Terminado">Terminado</option>
-            <option value="Abandonado">Abandonado</option>
-        </select>
-    </div>
-    <div class="form-group m-2">
-        <label for="isWriter">El usuario es el autor del comic?</label>
-        <input type="checkbox" name="isWriter" id="isWriter" checked>
-    </div>
-    <div class="form-group m-2">
-        <label for="comicWriter">Autor Original</label>
-        <input type="text" name="comicWriter" id="comicWriter" disabled>
+    <div class="container collapse" id="collapseExample">
+        <div class="card card-body">
+            <ul class="list-group list-group-numbered list-group-flush">
+                <li class="list-group-item">El archivo de la imagen puede llamarse de cualquier forma, el servidor le asiganara un nombre adecuado para identificar</li>
+                <li class="list-group-item">Solo se admiten imagenes con estas extensiones: jpg, jpeg, png</li>
+                <li class="list-group-item">Si deseas borrar el comic posteriormente, debe hacerse desde el perfil del comic</li>
+                <li class="list-group-item">Estan prohibidos los titulos o descripciones obscenos</li>
+                <li class="list-group-item">Por favor mantener coherencia en las fechas de publicacion y estados de publicacion para no confundir a los usuarios</li>
+            </ul>
+        </div>
     </div>
 
-    <div class="form-group m-2">
-        <label for="selectedCats">Categorias Seleccionadas</label>
-        <input type="text" name="selectedCats" id="selectedCats">
-    </div>
+    <form action="/comic/create" method="post" enctype="multipart/form-data" class="container mx-auto px-sm-3 py-3 mb-3 bg-neutral text-dark rounded">
 
-    <div id="categories-block"></div>
-    <button type="button" id="addCat">Agregar Categoria</button>
-    <button type="button" id="revCat">Remover Ultima Categoria</button>
-    <button type="submit" id="register">Registrar</button>
+        <div class="mb-3">
+            <label for="comicName" class="form-label">Nombre/Titulo</label>
+            <input type="text" class="form-control" name="comicName" id="comicName" aria-describedby="titleHelp" required>
+            <div class="form-text bg-sky rounded p-1">Ponle un titulo que llame la atención!</div>
+        </div>
 
-</form>
+        <div class="mb-3">
+            <label for="comicDescription" class="form-label">Descripción</label>
+            <textarea class="form-control" type="text" name="comicDescription" id="comicDescription" cols="50" rows="4" required></textarea>
+            <div class="form-text bg-sky rounded p-1">Da un resumen o descripción de este comic!</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="CoverImage" class="form-label">Imagen de Portada</label>
+            <input class="form-control" type="file" name="CoverImage" id="CoverImage" accept="image/*" required>
+            <div class="form-text bg-sky rounded p-1">Ponle un titulo que llame la atención!</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="comicStart" class="form-label">Fecha de Inicio</label>
+            <input class="form-control" type="date" name="comicStart" id="comicStart">
+            <div class="form-text bg-sky rounded p-1">Indica cuando comenzo a publicarse este comic</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="comicSchedule" class="form-label">Frecuencia de Publicación</label>
+            <select  name="comicSchedule" id="comicSchedule" class="form-select">
+                <option value="Terminado">Terminado</option>
+                <option value="Semanal">Semanal</option>
+                <option value="Bisemanal">Bisemanal</option>
+                <option value="Trisemanal">Trisemanal</option>
+                <option value="Mensual">Mensual</option>
+                <option value="BiMensual">BiMensual</option>
+                <option value="TriMensual">TriMensual</option>
+            </select>
+            <div class="form-text bg-sky rounded p-1">Que tan frecuente se publica un capitulo del comic?</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="comicStatus" class="form-label">Estado de publicacion</label>
+            <select name="comicStatus" id="comicStatus" class="form-select">
+                <option value="En-publicacion">En Publicación</option>
+                <option value="Hiatus">Hiatus</option>
+                <option value="Terminado">Terminado</option>
+                <option value="Abandonado">Abandonado</option>
+            </select>
+            <div class="form-text bg-sky rounded p-1">El comic ya termino? o esta detenido?</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="isWriter" class="form-check-label">El usuario es el autor del comic?</label>
+            <input type="checkbox" class="form-check-input" name="isWriter" id="isWriter" checked>
+            <div class="form-text bg-sky rounded p-1">Indica si el usuario es el autor?</div>
+        </div>
+        <div class="mb-3">
+            <label for="comicWriter" class="form-label">Autor Original</label>
+            <input type="text" class="form-control" name="comicWriter" id="comicWriter" disabled>
+            <div class="form-text bg-sky rounded p-1">El autor aparecera con este nombre!</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="selectedCats" class="form-label">Categorias Seleccionadas</label>
+            <input type="text" class="form-control" name="selectedCats" id="selectedCats">
+            <div class="form-text bg-sky rounded p-1">Aqui se guardan todas las categorias!</div>
+        </div>
+
+        <div id="categories-block" class="mb-3 d-lg-flex"></div>
+
+
+
+        <div class="text-center">
+            <button type="button" class="btn btn-neutral mx-auto" id="addCat">Agregar Categoria</button>
+            <button type="button" class="btn btn-neutral mx-auto" id="revCat">Remover Ultima Categoria</button>
+            <button type="submit" class="btn btn-success mx-auto">Registrar</button>
+            <button type="submit" class=" border-0 mx-auto">
+                <a class="btn btn-secondary" href="/">Cancelar</a>
+            </button>
+        </div>
+    </form>
+
+</section>
+
 <script>
+    let revCat = document.getElementById('revCat')
     let check = document.getElementById('isWriter')
     let writer = document.getElementById('comicWriter')
     check.addEventListener('click', () => {
@@ -78,7 +122,7 @@
     let cats = document.getElementById('categories-block')
     let addCat = document.getElementById('addCat')
 
-    let catGroup = ["---","acción","comedia","misterio","aventura","drama","terror","fantasia","romance","vida-escolar","vida-cotidiana","ciencia-ficcion","deportes","maduro","crimen","psicologico","artes-marciales"]
+    let catGroup = ["---","acción","comedia","misterio","aventura","drama","terror","fantasia","romance","vida-escolar","vida-cotidiana","ciencia-ficcion","deportes","maduro","crimen","psicologico","artes-marciales","superheroes","juvenil"]
 
     let selCats = document.getElementById('selectedCats');
     selCats.value = ""
@@ -90,15 +134,17 @@
     function createCats(){
         catAmount++;
         let catDiv = document.createElement('div');
-        catDiv.classList.add('form-group');
-        catDiv.classList.add('m-2');
+        catDiv.classList.add('mb-3');
         catDiv.setAttribute('id',`cat_`+catAmount);
 
         let catLabel = document.createElement('label');
+        catLabel.classList.add('form-label')
+        catLabel.classList.add('me-1')
         catLabel.setAttribute('for','cat'+catAmount);
         catLabel.textContent = "Categoria "+catAmount;
 
         let catSelect = document.createElement('select');
+        catSelect.classList.add('form-select')
         catSelect.setAttribute('name','cat'+catAmount);
         catSelect.setAttribute('id','catSelect-'+catAmount);
         catSelect.toggleAttribute('required');
@@ -118,7 +164,7 @@
             }else{
                 catOption.setAttribute('value',catGroup[i]);
             }
-            catOption.textContent = catGroup[i].toUpperCase();
+            catOption.textContent = (catGroup[i].replaceAll('-',' ')).toUpperCase();
             catSelect.appendChild(catOption);
             counter++;
         }

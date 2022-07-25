@@ -17,13 +17,14 @@ const sequelize = require('./lib/sequelizeInit');
 const helpers = require('./lib/helpers')
 const controller = require('./controllers/comicController');
 const  {isLoggedIn, isNotLoggedIn} = require('./lib/checkLog');
+const bcrypt = require('bcrypt');
 
 
 //Iniciando a Passport el encargado de la session del usuario
 initializePassport(
     passport,
-    getUserByEmail = async (email) => { return models.UserEntry.findAll( { where: { email: email} } ) },
-    getUserbyId = async(id) => {  return models.UserEntry.findAll( { where: { id: id} } ) }
+    getUserByEmail = async (email) => { return models.UserEntry.findOne( { where: { email: email} } ) },
+    getUserbyId = async(id) => {  return models.UserEntry.findOne( { where: { id: id} } ) }
 );
 //Configuracion del servidor
 app.listen(3000);
@@ -52,8 +53,8 @@ app.use(async (req,res,next) => {
 app.get('/', async (req, res) => {
     //Si hay un usuario en el request, crea la variable para usar
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
-        console.log('user en /:>> ', user);
+        await req.user.then( e => {user = e.dataValues} );
+        //console.log('user en /:>> ', user);
     }
 
     //Regresa todos los usuarios registrados, para uso de admins
@@ -171,34 +172,33 @@ app.get('/', async (req, res) => {
         if (randomTag2[i]) {
             randomTag2[i] = randomTag2[i].dataValues
         }
+        if(updatedComics[i]) {
+
+        }
+        if (newComics[i]) {
+
+        }
     }
 
-    console.log('likedThisWeek :>> ', likedThisWeek);
-    console.log('likedThisWeek.lenght :>> ', likedThisWeek.length);
+    //console.log('likedThisWeek :>> ', likedThisWeek);
+    //console.log('likedThisWeek.lenght :>> ', likedThisWeek.length);
 
 
     res.render('index', {title: 'Pagina Principal', users: users, user: user, likedThisWeek:likedThisWeek, newComics:newComics, updatedComics:updatedComics, rngTags:rngTags, randomTag2:randomTag2,randomTag1:randomTag1, success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
-})
-app.get('/about',async (req, res) => {
-    let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
-        console.log('user en /about:>> ', user);
-    }
-    res.render('about',{title: 'Pagina de Informacion', success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
 })
 app.get('/index',(req, res) => {
     res.redirect('/');
 })
 app.get('/login', async (req, res) => {
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
+        await req.user.then( e => {user = e.dataValues} );
         console.log('user en /:>> ', user);
     }
     res.render('./user/login', {title: 'Acesso',user:user, success:req.flash('success'), error:req.flash('error'), message:req.flash('message')})
 })
-app.post('/login', passport.authenticate('local'), async (req, res) =>{
+app.post('/login', passport.authenticate('local',{failureRedirect:'login', failureFlash:"Usuario o Contraseña incorrecta"}), async (req, res, err) =>{
     res.redirect(req.session.returnTo || '/');
-    delete req.session.returnTo;
+    delete req.session.returnTo
 })
 app.get('/logout', (req, res) => {
     req.logOut();
@@ -214,7 +214,7 @@ app.post('/register', async (req, res, next) =>{
         //Se cambian los espacios en blanco del nombre para evitar complicaciones
         let username = req.body.username;
         if(username.includes(" ")){
-            usernamer = username.replace(" ","-")
+            username = username.replace(" ","-")
         }
 
         //Primero se revisa si no estan registrados el nombre de usuario o el correo
@@ -237,10 +237,15 @@ app.post('/register', async (req, res, next) =>{
         }
 
         //Encriptando la contraseña del usuario
-        const Password = await helpers.encryptPassword(req.body.password);
+        const Password = await bcrypt.hash(req.body.password, 10);
+        bcrypt.compare(req.body.password,Password, function(err, result) {
+            if (err) { throw (err); }
+            console.log(result);
+        });
 
+        console.log('Password :>> ', Password);
         //Aqui se crea y se guarda en la bdd el usuario
-        let newUser = await models.UserEntry.create({username: username, email: req.body.email, password: Password,profilePicPath:"/defaultUserPic.png"})
+        let newUser = await models.UserEntry.create({username: username, email: req.body.email, password: Password, profilePicPath:"/defaultUserPic.png"})
 
         next();
 
@@ -282,11 +287,40 @@ async (req,res) => {
 app.get('/search',async (req, res) => {
 
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
+        await req.user.then( e => {user = e.dataValues} );
         console.log('user en /search:>> ', user);
     }
 
+
     let comics = await models.ComicEntry.findAll();
+
+    if (comics.length > 0) {
+        for (let comic of comics) {
+            comic = comic.dataValues;
+        }
+    }
+    res.render('comic/search', {title: 'Buscar Comic', user:user, comics: comics,success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
+})
+app.get('/search/:paramsTag', async (req, res) => {
+    let user; if (await req.user) {
+        await req.user.then( e => {user = e.dataValues} );
+        console.log('user en /search:>> ', user);
+    }
+
+    let paramsTag; if (await req.params.paramsTag) {
+        paramsTag = await req.params.paramsTag
+        console.log('paramsTag :>> ', paramsTag);
+    }
+    console.log('paramsTag :>> ', paramsTag);
+
+    let comics = await models.ComicEntry.findAll({
+        where: {
+            comicCategories: {
+                [Op.like]: '%' + paramsTag + '%'
+            }
+        }
+    })
+
     if (comics.length > 0) {
         for (let comic of comics) {
             comic = comic.dataValues;
@@ -296,12 +330,31 @@ app.get('/search',async (req, res) => {
 })
 app.post('/search', async (req, res) => {
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
+        await req.user.then( e => {user = e.dataValues} );
         console.log('user en /search post:>> ', user);
     }
     let search;
     let comicName;
     let comicTag;
+
+    if (!await req.body.comicSearch && !await req.body.cats){
+        comicTag = req.body.quickCat
+        search = await models.ComicEntry.findAll({
+            where: {
+                comicCategories: {
+                    [Op.like]: '%' + comicTag + '%'
+                }
+            }
+        })
+
+        if (search) {
+            count = 0
+            for (const comic of search) {
+                count++
+                console.log(`comic ${count}`,comic.dataValues);
+            }
+        }
+    }
 
     if (await req.body.cats !== "---" && !await req.body.comicSearch) {
         comicTag = req.body.cats

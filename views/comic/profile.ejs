@@ -8,11 +8,11 @@
 
     <section class="container mx-auto px-sm-3 py-3 my-5 bg-neutral text-dark rounded border border-1 border-carbon">
         <!-- Comic Info -->
-        <div class="comic-info-wrapper container  my-md- p-0 d-lg-flex">
-            <div class="text-center border border-watermelon">
-                <img class="img-fluid" style="max-width: 400px;" src="<%= comic.comicCoverPath %>" >
+        <div class="comic-info-wrapper container p-0 d-lg-flex row mx-auto">
+            <div class="justify-content-center d-flex flex-column col-12 col-md-3 col-lg-4 p-0">
+                <img class="d-inline-block img-fluid border border-watermelon" src="<%= comic.comicCoverPath %>" >
             </div>
-            <div class="bg-sky text-center p-2 text-lg-start w-100">
+            <div class="bg-sky text-center p-2 text-lg-start col-12 col-md-9 col-lg-8">
                 <p class="h3 text-wrap text-break border-4 border-bottom border-watermelon">
                     <%= comic.comicName %>
                 </p>
@@ -25,7 +25,7 @@
                     </p>
                 <% } else {%>
                     <p class="text-wrap text-break">
-                        <span class="fs-4 border-2 border-bottom border-watermelon"> Autor : </span> <%= comic.comicWriter %>
+                        <span class="fs-4 border-2 border-bottom border-watermelon"> Autor : </span> <span class="ms-1 d-inline-block fs-4"><%= comic.comicWriter %></span>
                     </p>
                 <% } %>
                 <p class="text-wrap text-break">
@@ -37,14 +37,17 @@
                 <p class="text-wrap text-break">
                    <span class="fs-4 border-2 border-bottom border-watermelon"> Categorias :</span> <br>
                     <% for( let i = 0; i < categories.length; i++ ) { %>
-                      <div class="parallelogram btn btn-neutral">
-                        <span class="d-block parallelogram-reverse"> <%= categories[i] %> </span>
+                      <div class="parallelogram btn btn-neutral ms-1 mb-2">
+                        <a href=<%= `/search/${categories[i].replaceAll(" ","-").normalize("NFD").replace(/[\u0300-\u036f]/g, "")}` %>  class="text-decoration-none text-jet d-block parallelogram-reverse"> <%= categories[i].toUpperCase() %> </a>
                       </div>
                     <% } %>
                 </p>
 
                 <p class="text-wrap text-break mb-3">
                     <span class="fs-4 border-2 border-bottom border-watermelon"> Estado :</span> <%= comic.comicStatus.replace("-"," ") %>
+                </p>
+                <p class="text-wrap text-break mb-3">
+                    <span class="fs-4 border-2 border-bottom border-watermelon"> Frecuencia de Publicacion :</span> <%= comic.comicSchedule.replace("-"," ") %>
                 </p>
 
                 <p class="text-wrap text-break">
@@ -59,7 +62,7 @@
         <% if (user) { %>
             <div class="container d-flex justify-content-between">
                 <div class="user-buttons-wrappers text-center my-2">
-                    <% if (isUploader) { %>
+                    <% if (isUploader || user.role === 1) { %>
                         <a class="btn btn-neutral text-break text-dark text-decoration-none" href=<%= `/comic/edit/${user.id}/${comic.id}` %> id="editComicLink">
                             <i class="fa-solid fa-pen-to-square"></i>
                         </a>

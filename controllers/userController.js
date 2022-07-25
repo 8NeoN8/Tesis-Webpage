@@ -8,7 +8,7 @@ const path = require('path');
 
 const settings_get = async (req, res) => {
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
+        await req.user.then( e => {user = e.dataValues} );
         console.log('user en /create get:>> ', user);
     }
 
@@ -27,7 +27,7 @@ const settings_get = async (req, res) => {
 
 const settings_post = async (req, res) => {
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
+        await req.user.then( e => {user = e.dataValues} );
         console.log('user en /create get:>> ', user);
     }
 
@@ -67,9 +67,17 @@ const settings_post = async (req, res) => {
             }
         })
     }
+    if (await req.body.filterOnOff) {
+        await models.SettingsEntry.update({value:req.body.filterOnOff},{
+            where: {
+                user_id: userId,
+                setting:"filterOnOff"
+            }
+        })
+    }
 
     //Opcion para elegir uno de los colores pre-establecidos para el comic
-    if (req.body.colorFilter) {
+    if (await req.body.colorFilter) {
         await models.SettingsEntry.update({value:req.body.colorFilter},{
             where: {
                 user_id: userId,
@@ -79,7 +87,7 @@ const settings_post = async (req, res) => {
     }
 
     //Aqui si se eligio, se puede ingresar un color personalizado
-    if (req.body.customColor) {
+    if (await req.body.customColor) {
         await models.UserEntry.update({value:req.body.customColor},{
             where: {
                 user_id: userId,
@@ -89,14 +97,7 @@ const settings_post = async (req, res) => {
     }
 
     //Y por ultimo en opciones de comic se define si el filtro se activa o no
-    if (req.body.filterOnOff) {
-        await models.SettingsEntry.update({value:req.body.filterOnOff},{
-            where: {
-                user_id: userId,
-                setting:"filterOnOff"
-            }
-        })
-    }
+
 
     //Opciones de cuenta
 
@@ -186,6 +187,7 @@ const settings_post = async (req, res) => {
         }
     }
 
+    req.flash('success','Datos Actualizados Exitosamente')
     res.redirect('back')
 }
 
@@ -247,13 +249,16 @@ const deleteUser = async (req, res) => {
 }
 
 const userProfile_get = async (req, res) => {
-    let isUploader = false;
+    let isUser = false;
     let userId = req.params.userId;
 
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
-        console.log('user en /create get:>> ', user);
+        await req.user.then( e => {user = e.dataValues} );
+        if (userId = user.id) {
+            isUser = true;
+        }
     }
+
     let userEntry = await models.UserEntry.findByPk(userId);
 
     if (!userEntry) {
@@ -284,13 +289,13 @@ const userProfile_get = async (req, res) => {
 
     let title = `Perfil de ${userEntry.username}`
 
-    res.render('user/userProfile',{title:title, user:user, profileUser:userEntry, isUploader:isUploader, networks:networks, comics:comics,  success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
+    res.render('user/userProfile',{title:title, user:user, profileUser:userEntry, isUser:isUser, networks:networks, comics:comics,  success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
 
 }
 
 const userProfile_post = async (req, res) => {
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
+        await req.user.then( e => {user = e.dataValues} );
         console.log('user en /create get:>> ', user);
     }
 
@@ -370,7 +375,7 @@ const userProfile_post = async (req, res) => {
                 break;
         }
         req.flash('success','Red social Agregada')
-         res.redirect('back');
+        res.redirect('back');
     } catch (error) {
         req.flash('error','Hubo un problemas inesperado, intentelo de nuevo');
         res.redirect('back');
@@ -381,7 +386,7 @@ const userProfile_post = async (req, res) => {
 
 const deleteNetwork = async (req, res) => {
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
+        await req.user.then( e => {user = e.dataValues} );
         console.log('user en /create get:>> ', user);
     }
 

@@ -6,17 +6,17 @@
     <form action="/register" method="post" class="container mx-auto px-sm-3 py-3 my-5 bg-neutral text-dark rounded">
         <div class="mb-3">
             <label for="username" class="form-label">Nombre de Usuario</label>
-            <input type="text" class="form-control" id="username" aria-describedby="usernameHelp">
-            <div id="usernameHelp" class="form-text bg-sky rounded p-1">Tu nombre de usuario es unico, aun asi puedes cambiarlo después</div>
+            <input type="text" class="form-control" name="username" id="username" aria-describedby="usernameHelp">
+            <div id="username" class="form-text bg-sky rounded p-1">Tu nombre de usuario es unico, aun asi puedes cambiarlo después</div>
         </div>
         <div class="mb-3">
             <label for="email" class="form-label">E-mail</label>
-            <input type="email" class="form-control" id="email" aria-describedby="emailHelp">
+            <input type="email" class="form-control" name="email" id="email" aria-describedby="emailHelp">
             <div id="emailHelp" class="form-text bg-sky rounded p-1">Tu e-mail no se compartira con nadie</div>
         </div>
         <div class="mb-3">
             <label for="password" class="form-label">Contraseña</label>
-            <input type="password" class="form-control" id="password" aria-describedby="passwordHelp">
+            <input type="password" class="form-control" name="password" id="password" aria-describedby="passwordHelp">
             <div id="passwordHelp" class="form-text bg-sky rounded p-1">Esta contraseña solo la sabes tu, los admins no pueden acceder a tu usuario, pero si a los comics que subas por motivos de seguridad</div>
         </div>
         <div class="text-center">

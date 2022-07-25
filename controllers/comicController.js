@@ -9,8 +9,8 @@ const helpers = require('../lib/helpers')
 
 const create_get = async (req, res) => {
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
-        console.log('user en /create get:>> ', user);
+        await req.user.then( e => {user = e.dataValues} );
+
     }
     res.render('comic/create', {title: 'Create Comic Entry',user:user, success: req.flash('success'), error: req.flash('error'), message: req.flash('message')})
 }
@@ -20,8 +20,7 @@ const create_post =  async (req, res) => {
     try {
         //Primero se obitne el usuario para usar sus datos al guardar
         let user; if (await req.user) {
-            await req.user.then( e => {user = e[0].dataValues} );
-            console.log('user en /create post:>> ', user);
+            await req.user.then( e => {user = e.dataValues} );
         }
 
         //Aqui se crea la fecha actual para asignar como valor por defecto de la fecha de inicio si el usuario no elige una
@@ -32,21 +31,33 @@ const create_post =  async (req, res) => {
         today = mm + '/' + dd + '/' + yyyy;
 
         //Verificando si el usuario ingreso un autor para el comic, sino se toma al usuario como autor
-        let writer = user.dataValues.username;
+        let writer = user.username;
         if (req.body.comicWriter) {
             writer = req.body.comicWriter
         }
 
         //Eliminando espacios en el nombre del autor si los hay para evitar problemas de lectura con el programa
-        if(writer.includes(" ")){
-            writer = writer.replaceAll(" ","-")
-        }
+        writer = writer.replaceAll(" ","-")
         //Eliminando espacios en el nombre del comic si los hay para evitar problemas de lectura con el programa
         let comicName = req.body.comicName;
-        if (comicName.includes(" ")) {
-            comicName = req.body.comicName.replaceAll(" ","-");
+        comicName = comicName.replaceAll(" ","-");
+        comicName = comicName.replaceAll(":","_");
+
+        let ifComic = await models.ComicEntry.findOne({
+            where: {
+                comicName: comicName
+            }
+        })
+
+        console.log('ifComic :>> ', ifComic);
+
+        if (ifComic != null) {
+            req.flash('error','Este comic ya existe en nuestra base de datos!')
+            res.redirect('back')
+            return
         }
 
+        console.log('comicName en controller :>> ', comicName);
         //Directorio del comic
         let dirPath = './public/uploads/'+comicName
 
@@ -55,7 +66,7 @@ const create_post =  async (req, res) => {
             fs.mkdirSync(path.join(__dirname,'..','/public/uploads/',comicName), err => {
                 if(err) {
                     req.flash('error','Error. Hubo un problema al crear la carpeta del comic, intentelo de nuevo');
-                    res.redirect('./comic/create')
+                    res.redirect('back')
                 }
             })
         }
@@ -80,10 +91,9 @@ const create_post =  async (req, res) => {
             }
         }
         coverPath = '/uploads/'+comicName+'/'+fileName;
-
         //Creando y guardando el registro del comic
         const comic = await models.ComicEntry.create({
-            comicUploader_id: user.dataValues.id,
+            comicUploader_id: user.id,
             comicName: comicName,
             comicDescription: req.body.comicDescription,
             comicStatus: req.body.comicStatus,
@@ -95,6 +105,7 @@ const create_post =  async (req, res) => {
         })
         req.flash('success','El comic se ha registrado exitosamente')
         res.redirect(`../read/${comic.id}`);
+        return
 
     } catch (err) {
         console.log(err);
@@ -128,8 +139,8 @@ const create_post =  async (req, res) => {
 
 const upload_get = async (req, res) => {
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
-        console.log('user en /upload get:>> ', user);
+        await req.user.then( e => {user = e.dataValues} );
+
     }
 
 
@@ -174,8 +185,8 @@ const upload_post = async (req, res) => {
     //Una vez enviado el archivo y la informacion del capitulo
     try {
         let user; if (await req.user) {
-            await req.user.then( e => {user = e[0].dataValues} );
-            console.log('user en /upload post:>> ', user);
+            await req.user.then( e => {user = e.dataValues} );
+
         }
         let params; if(await req.params) {
             params = req.params;
@@ -289,8 +300,8 @@ const upload_post = async (req, res) => {
 
 const profile_get = async (req,res) => {
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
-        console.log('user en /profile:>> ', user);
+        await req.user.then( e => {user = e.dataValues} );
+
     }
     const comicId = req.params.comicId
     let uploader = false;
@@ -356,8 +367,8 @@ const profile_get = async (req,res) => {
 const read_get = async (req, res) =>{
 
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
-        console.log('user en /read:>> ', user);
+        await req.user.then( e => {user = e.dataValues} );
+        console.log('user.id :>> ', user.id);
     }
 
     let settings;
@@ -444,8 +455,8 @@ const read_get = async (req, res) =>{
         settings = {
             pageTurnDirection: Setts[0].value,
             jumpOnPageTurn: Setts[1].value,
-            filterOnOff: Setts[2].value,
-            colorFilter: Setts[3].value,
+            colorFilter: Setts[2].value,
+            filterOnOff: Setts[3].value,
         };
         console.log('settings :>> ', settings);
     }
@@ -455,8 +466,8 @@ const read_get = async (req, res) =>{
 
 const read_post = async (req, res) =>{
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
-        console.log('user en /read post:>> ', user);
+        await req.user.then( e => {user = e.dataValues} );
+
     }
     params = req.params
 
@@ -490,8 +501,8 @@ const edit_comic_get = async (req, res) => {
 
     let uploader = req.params.uploaderId;
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
-        console.log('user en /profile:>> ', user);
+        await req.user.then( e => {user = e.dataValues} );
+
     }
     console.log('username :>> ', user.username);
     if (user.id !== parseInt(uploader)) {
@@ -510,8 +521,8 @@ const edit_comic_post = async (req, res) =>{
     let comicId = await req.params.comicId;
     let uploaderId = await req.params.uploaderId;
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
-        console.log('user en /profile:>> ', user);
+        await req.user.then( e => {user = e.dataValues} );
+
     }
 
     let oldComicData = await models.ComicEntry.findOne({
@@ -646,8 +657,8 @@ const delete_comic_post = async (req, res) => {
     let comicId = req.params.comicId
     let uploaderId = req.params.uploaderId
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
-        console.log('user en /profile:>> ', user);
+        await req.user.then( e => {user = e.dataValues} );
+
     }
 
     let uploaderData = await models.UserEntry.findOne({
@@ -731,8 +742,8 @@ const delete_chapter_get = async (req, res) => {
 
     let chapId = req.params.chapterId;
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
-        console.log('user en /profile:>> ', user);
+        await req.user.then( e => {user = e.dataValues} );
+
     }
 
     let comicData = await models.ComicEntry.findByPk(comicId);
@@ -778,8 +789,8 @@ const delete_chapter_get = async (req, res) => {
 
 const likes_post = async (req, res) => {
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
-        console.log('user en /profile:>> ', user);
+        await req.user.then( e => {user = e.dataValues} );
+
     }
     let comicId = req.params.comicId;
 
@@ -803,8 +814,8 @@ const likes_post = async (req, res) => {
 
 const deleteComment_post = async (req, res) => {
     let user; if (await req.user) {
-        await req.user.then( e => {user = e[0].dataValues} );
-        console.log('user en /profile:>> ', user);
+        await req.user.then( e => {user = e.dataValues} );
+
     }
 
     let commentId = req.params.commentId;

@@ -1,65 +1,113 @@
 <%- include ('../partials/head.ejs') %>
 
-<% if (profileUser) { %>
-    <h1><%= profileUser.username %> </h1>
-    <img src=<%= profileUser.profilePicPath %>  width="200px" height="200px">
-    <br>
-<% } %>
+<section class="container bg-neutral my-3 justify-content-center text-center pb-2 rounded-2">
+    <div class="text-center p-3 d-flex justify-content-around">
+        <div class="mb-3">
+            <div class="h2 py-2 text-danger border-bottom border-danger"><%= profileUser.username %> </div>
+            <img class="img-fluid border border-watermelon rounded" src=<%= profileUser.profilePicPath %> style="max-height:400px;">
+        </div>
 
-<% if (isUploader) { %>
-    <button class="btn-primary" id="addSocial">Agregar Red social</button>
-    <form action=<%= `/user/profile/${profileUser.id}` %>  method="post" id="socialForm" hidden>
-        <label for="socialSel">Eliga la red social a añadir</label>
-        <select name="socialSel" id="socialSel">
-            <option selected></option>
-            <option value="twitter">Twitter</option>
-            <option value="facebook">Facebook</option>
-            <option value="pinterest">Pinterest</option>
-            <option value="pixiv">Pixiv</option>
-            <option value="instagram">Instagram</option>
-        </select>
-        <label for="socialLink">Link de su Perfil</label>
-        <input type="text" name="socialLink">
-        <button type="submit">agregar</button>
-    </form>
-<% } %>
 
-<% if (networks.length > 0) { %>
-    <% if (!isUploader) { %>
-        <h2>Chequea sus redes sociales tambien!</h2>
-    <% } %>
-    <% for( let i = 0; i < networks.length; i++ ) { %>
-        <h3> <%= networks[i].networkName %> </h3>
-        <a href=<%= networks[i].networkLink %> target="_blank">Perfil</a>
-        <% if (isUploader) { %>
-            <a href=<%= `/user/delete/social/${networks[i].user_id}/${networks[i].id}` %>">Eliminar</a>
+        <div class="mb-3">
+            <% if (networks.length > 0) { %>
+                <% if (!isUser) { %>
+                    <div class=" h2 border-bottom border-watermelon py-2 ">Chequea sus redes sociales!</div>
+                <% } else { %>
+                    <div class=" h2 border-bottom border-watermelon py-2 ">Redes sociales</div>
+                <% } %>
+                <div class="mb-3 justify-content-center">
+
+                    <% for( let i = 0; i < networks.length; i++ ) { %>
+                        <div class="mb-3">
+                            <a class="text-decoration-none btn btn-sky border-watermelon mx-2 parallelogram" href=<%= networks[i].networkLink %> target="_blank"> <span class="d-block parallelogram-reverse"><%= (networks[i].networkName).toUpperCase() %></span> </a>
+                            <% if (isUser) { %>
+                                <a class="text-decoration-none btn btn-neutral mx-2" href=<%= `/user/delete/social/${networks[i].user_id}/${networks[i].id}` %>">Eliminar</a>
+                            <% } %>
+                        </div>
+                    <% } %>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <div class="justify-content-center container text-center py-2">
+        <% if (isUser) { %>
+            <button class="btn btn-watermelon" id="addSocial">Agregar Red social</button>
+            <form action=<%= `/user/profile/${profileUser.id}` %>  method="post" id="socialForm" class="form-group justify-content-center container text-start" hidden>
+
+                <div class="mb-3">
+                    <label for="socialSel" class="form-label">Eliga la red social a añadir</label>
+                    <select name="socialSel" class="form-select" id="socialSel">
+                        <option selected></option>
+                        <option value="twitter">Twitter</option>
+                        <option value="facebook">Facebook</option>
+                        <option value="pinterest">Pinterest</option>
+                        <option value="pixiv">Pixiv</option>
+                        <option value="instagram">Instagram</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="socialLink" class="form-label">Link de su Perfil</label>
+                    <input type="text" class="form-control" name="socialLink">
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success mx-auto">Agregar</button>
+                </div>
+            </form>
         <% } %>
-    <% } %>
-<% } %>
+    </div>
 
-<% if (comics.length > 0) { %>
-    <% if (!isUploader) { %>
-        <h2>Mira los comics que ha compartido!</h2>
-    <% } %>
-    <% for( let i = 0; i < comics.length; i++ ) { %>
-        <div class="comic_block_wrapper bg-secondary p-2">
-            <div class="bg-dark p-2">
-                <a href=<%= `/read/${comics[i].id}` %> >
-                    <img src="<%= comics[i].comicCoverPath %>" width="100px" height="100px">
-                    <h3>title: <%= comics[i].comicName %></h3>
-                    <h3>Author: <%= comics[i].comicWriter %></h3>
-                    <h3>Status: <%= comics[i].comicStatus %></h3>
-                </a>
+    <% if (comics.length > 0) { %>
+
+        <% if (!isUser) { %>
+            <div class="text-center p-3 d-flex justify-content-around">
+                <div class=" h2 border-bottom border-watermelon py-2 ">Echale un vistazo a los comics que ha compartido!</div>
             </div>
+        <% } else { %>
+            <div class="text-center p-1 mb-3 d-flex justify-content-around border-bottom border-top border-watermelon">
+                <div class=" h2">Comics</div>
+            </div>
+        <% } %>
+
+        <div class="mb-3 bg-watermelon py-4 rounded-4 mb-3">
+            <% for( let i = 0; i < comics.length; i++ ) { %>
+
+                <div class="container mx-auto px-sm-3 py-3 my-5 bg-neutral text-dark d-flex border border-carbon col-lg-6">
+
+                    <div class="form-group col-sm-3 text-center">
+                        <img class="border border-watermelon rounded" src="<%= comics[i].comicCoverPath %> " style="max-width: 130px; max-height:130px; min-width: 80px; min-height: 80px">
+                    </div>
+                    <div class="form-group col-sm-9 col-lg-8 bg-sky rounded">
+                        <div class="h4 bg-neutral rounded border-bottom border-start border-watermelon border-opacity-25 border-3 mb-2 p-2"><%= (comics[i].comicName).replaceAll("-"," ") %> </div>
+                        <div class="p-1 text-center">
+                            <% if (isUser) { %>
+                                <a class=" text-neutral text-center btn btn-watermelon" href="<%= `/comic/upload/${comics[i].comicUploader_id}/${comics[i].id}` %> ">Subir capitulo</a>
+                                <a class=" text-neutral text-center btn btn-watermelon" href="<%= `/comic/edit/${comics[i].comicUploader_id}/${comics[i].id}` %> ">Editar informacion</a>
+                            <% } %>
+                            <a class=" text-neutral text-center btn btn-watermelon" href="/read/<%= comics[i].id %> ">Ir al perfil</a>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+
+    <% } else {%>
+        <div class="text-center p-3 d-flex justify-content-around">
+            <div class="h1 border-bottom border-watermelon py-2 ">Ow, parece que no ha compartido ningun comic :(</div>
         </div>
     <% } %>
-<% } else { %>
-    <h2> Parece que no a compartido ningun comic :(  </h2>
-<% } %>
+
+
+</section>
+
+
+
 
 <%- include ('../partials/footer.ejs') %>
 
-<% if (isUploader) { %>
+<% if (isUser) { %>
     <script>
 
         let addSocial = document.getElementById('addSocial');
@@ -68,6 +116,5 @@
         addSocial.addEventListener('click',()=>{
             socialForm.toggleAttribute('hidden');
         })
-
     </script>
 <% } %>

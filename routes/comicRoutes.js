@@ -7,6 +7,7 @@ const path = require('path');
 const fs = require('fs');
 const app = express();
 const models = require('../models/models');
+const { closePath } = require('pdfkit');
 let user;
 
 
@@ -16,12 +17,9 @@ const storageComic = multer.diskStorage({
     destination:async function(req,response,done){
         //Se toma el nombre ingresado y se eliminan los espacios en blanco para la creacion del directorio
         let comicName = req.body.comicName;
-        if (comicName.includes(" ")) {
-            comicName = comicName.replaceAll(" ","-");
-        }
-        if (comicName.includes(":")) {
-            comicName = comicName.replaceAll(":","_");
-        }
+        comicName = comicName.replaceAll(" ","-");
+        comicName = comicName.replaceAll(":","_");
+
         //Se verifica que no exista un comic con ese nombre previamente y si es el caso de que existe se devuelve un error
         //En caso contrario se crea el directorio
         if(fs.existsSync(path.join(__dirname,'..','/public/uploads/',comicName))){
@@ -35,17 +33,15 @@ const storageComic = multer.diskStorage({
         //Aqui se denomina el nombre de la imagen, en el formato (Nombre de comic)-(imagen de cubierta).(jpg, jpeg, png)
         //Se toma el nombre ingresado y se eliminan los espacios en blanco para la creacion del nombre de la imagen
         let comicName = req.body.comicName;
-        if (comicName.includes(" ")) {
-            comicName = comicName.replaceAll(" ","-");
-        }
-        if (comicName.includes(":")) {
-            comicName = comicName.replaceAll(":","_");
-        }
+        comicName = comicName.replaceAll(" ","-");
+        comicName = comicName.replaceAll(":","_");
+
         //Si la imagen no tiene una extension valida se devuelve un error
         if (!path.extname(file.originalname)) {
             done(new Error("El archivo no es una imagen valida"))
         }
-        done(null, comicName+'-CoverImage'+path.extname(file.originalname))
+        let imageName = comicName+'-CoverImage'+path.extname(file.originalname)
+        done(null, imageName)
     }
 })
 
